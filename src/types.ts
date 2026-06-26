@@ -120,6 +120,18 @@ export interface GameState {
   nextPhaseAfterLastWords?: Phase; 
 }
 
+export interface RoomSnapshot {
+  id: string;
+  state: GameState;
+  lastEvent?: {
+    type: string;
+    at: string;
+  };
+  updatedAt: string;
+}
+
+export type RoomConnectionStatus = 'local' | 'loading' | 'connected' | 'syncing' | 'stale' | 'error';
+
 export type AnimationType = 'CLAW' | 'POTION' | 'SEER' | 'GUN' | 'SHIELD' | 'VOTE' | 'DAY_NIGHT' | 'SHERIFF' | null;
 
 export interface AnimationEvent {
