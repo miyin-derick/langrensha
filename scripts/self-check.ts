@@ -20,6 +20,11 @@ const openaiConfig = getProviderConfig('OpenAI');
 assert.equal(openaiConfig.endpoint, 'https://api.openai.com/v1/chat/completions');
 assert.equal(openaiConfig.apiKey, 'test-openai-key');
 
+process.env.DEEPSEEK_API_KEY = 'test-deepseek-key';
+const deepseekConfig = getProviderConfig('DeepSeek');
+assert.equal(deepseekConfig.endpoint, 'https://api.deepseek.com/chat/completions');
+assert.equal(deepseekConfig.apiKey, 'test-deepseek-key');
+
 process.env.DOUBAO_API_KEY = 'test-doubao-key';
 process.env.DOUBAO_MODEL = 'test-doubao-model';
 const doubaoConfig = getProviderConfig('Doubao');
@@ -42,6 +47,15 @@ assert.deepEqual(providerCounts, {
   Moonshot: 1,
   Aliyun: 2,
 });
+
+const rosterModelsByProvider = DEFAULT_AI_ROSTER.reduce<Record<string, string[]>>((models, seat) => {
+  models[seat.provider] = [...(models[seat.provider] || []), seat.model];
+  return models;
+}, {});
+
+assert.deepEqual(rosterModelsByProvider.DeepSeek, ['deepseek-v4-flash', 'deepseek-v4-flash']);
+assert.deepEqual(rosterModelsByProvider.Gemini, ['gemini-3.5-flash']);
+assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-4.7-flash', 'glm-4.7-flash', 'glm-4.7-flash']);
 
 const collectTsFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((entry) => {

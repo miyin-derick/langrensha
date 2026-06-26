@@ -6,6 +6,22 @@ interface ProviderConfig {
   modelOverride?: string;
 }
 
+function getDeepSeekConfig(): ProviderConfig {
+  if (process.env.DEEPSEEK_API_KEY) {
+    return {
+      endpoint: 'https://api.deepseek.com/chat/completions',
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      modelOverride: process.env.DEEPSEEK_MODEL,
+    };
+  }
+
+  return {
+    endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
+    apiKey: process.env.SILICONFLOW_API_KEY || '',
+    modelOverride: process.env.DEEPSEEK_MODEL || 'deepseek-ai/DeepSeek-V3',
+  };
+}
+
 export function getProviderConfig(provider: AIProvider): ProviderConfig {
   const registry: Record<AIProvider, ProviderConfig> = {
     OpenAI: {
@@ -13,10 +29,7 @@ export function getProviderConfig(provider: AIProvider): ProviderConfig {
       apiKey: process.env.OPENAI_API_KEY || '',
       modelOverride: process.env.OPENAI_MODEL,
     },
-    DeepSeek: {
-      endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
-      apiKey: process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY || '',
-    },
+    DeepSeek: getDeepSeekConfig(),
     Doubao: {
       endpoint: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
       apiKey: process.env.DOUBAO_API_KEY || process.env.ARK_API_KEY || '',

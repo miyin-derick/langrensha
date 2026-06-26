@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const body = req.body as TtsRequestBody;
-    const apiKey = process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY || '';
+    const apiKey = process.env.SILICONFLOW_API_KEY || '';
     if (!apiKey) {
       res.status(503).json({ error: 'TTS key is not configured' });
       return;

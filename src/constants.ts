@@ -57,12 +57,12 @@ export interface AIModelSeat {
 export const DEFAULT_AI_ROSTER: AIModelSeat[] = [
   { provider: 'OpenAI', model: 'gpt-4.1-mini' },
   { provider: 'OpenAI', model: 'gpt-4.1-mini' },
-  { provider: 'Gemini', model: 'gemini-1.5-flash' },
-  { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' },
-  { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' },
-  { provider: 'Zhipu', model: 'glm-4-flash' },
-  { provider: 'Zhipu', model: 'glm-4-flash' },
-  { provider: 'Zhipu', model: 'glm-4-flash' },
+  { provider: 'Gemini', model: 'gemini-3.5-flash' },
+  { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
+  { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
+  { provider: 'Zhipu', model: 'glm-4.7-flash' },
+  { provider: 'Zhipu', model: 'glm-4.7-flash' },
+  { provider: 'Zhipu', model: 'glm-4.7-flash' },
   { provider: 'Doubao', model: 'doubao-seed-2-0-lite-260428' },
   { provider: 'Moonshot', model: 'moonshot-v1-8k' },
   { provider: 'Aliyun', model: 'qwen-plus' },
@@ -80,16 +80,17 @@ export const MODEL_CATALOG: Record<string, string[]> = {
       'doubao-seed-2-0-lite-260428',
       'doubao-seed-1-6-flash-250615'
   ],
-  // 注意：我们将 Qwen 也放在 DeepSeek 列表里，统一走服务端代理。
   DeepSeek: [
+      'deepseek-v4-flash',
+      'deepseek-v4-pro',
       'deepseek-ai/DeepSeek-V3',       // 👑 主力战神 (便宜且强)
       'Qwen/Qwen2.5-7B-Instruct',      // 🆓 免费劳工 (极速)
       'Qwen/Qwen2.5-72B-Instruct',     // 🚀 备用强力模型
       'InternLM/internlm2_5-7b-chat'   // 🚀 备用免费模型
   ], 
   Aliyun:   ['qwen-plus', 'qwen-max'], 
-  Gemini:   ['gemini-1.5-flash', 'gemini-1.5-pro'], 
-  Zhipu:    ['glm-4', 'glm-4-flash'], 
+  Gemini:   ['gemini-3.5-flash'], 
+  Zhipu:    ['glm-4.7-flash', 'glm-4.5-flash'], 
   Moonshot: ['moonshot-v1-8k'], 
   MiniMax:  ['abab6.5s-chat'], 
   Tencent:  ['hunyuan-lite'], 
