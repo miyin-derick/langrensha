@@ -71,8 +71,42 @@ REACT_APP_GEMINI_API_KEY=AIzaSy...
 4. Run (Dev Mode)
 Bash
 
-npm start
-# Opens at http://localhost:3000
+npm run dev
+# Opens at the Vite URL, usually http://localhost:5173
+
+For local API routes, use Vercel's local runtime:
+
+```bash
+npx vercel dev
+```
+
+## Watch-Together Deployment
+
+This fork supports a host-controlled watch room for remote spectators.
+
+1. Create a Supabase project.
+2. Copy `supabase/schema.sql` into the Supabase SQL Editor and run it.
+3. Deploy the repository to Vercel.
+4. Add the environment variables from `.env.example` to Vercel.
+
+Browser-exposed variables:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Server-only variables:
+
+```text
+SUPABASE_SERVICE_ROLE_KEY
+ROOM_TOKEN_SECRET
+DEEPSEEK_API_KEY
+```
+
+Optional server-only provider keys can be added for Gemini, Aliyun, Moonshot, MiniMax, Zhipu, Tencent, and Groq.
+
+The host creates a room from `/`, shares `/room/<roomId>` with a friend, and controls playback from `/room/<roomId>?host=1`. The viewer link is read-only.
 🧠 System Architecture
 代码段
 

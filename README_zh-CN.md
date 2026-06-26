@@ -66,8 +66,42 @@ REACT_APP_GEMINI_API_KEY=AIzaSy...
 4. 启动 (开发模式)
 Bash
 
-npm start
-# 默认运行在 http://localhost:3000
+npm run dev
+# 默认运行在 Vite 输出的本地地址，通常是 http://localhost:5173
+
+如果要在本地同时跑 Vercel API Routes，请使用：
+
+```bash
+npx vercel dev
+```
+
+## 异地一起观战部署
+
+这个版本支持“房主控制、朋友只读观战”的房间模式。
+
+1. 创建 Supabase 项目。
+2. 把 `supabase/schema.sql` 复制到 Supabase SQL Editor 执行。
+3. 把项目部署到 Vercel。
+4. 在 Vercel 中配置 `.env.example` 里的环境变量。
+
+浏览器可见变量：
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+服务端私密变量：
+
+```text
+SUPABASE_SERVICE_ROLE_KEY
+ROOM_TOKEN_SECRET
+DEEPSEEK_API_KEY
+```
+
+其他模型供应商的 key 可以按需配置，全部放在 Vercel 服务端环境变量中，不要使用 `VITE_` 前缀。
+
+房主从 `/` 创建房间后进入 `/room/<roomId>?host=1`，复制 `/room/<roomId>` 发给朋友。朋友页面是只读观战，不能推进或重开对局。
 🧠 系统架构 (System Architecture)
 代码段
 
