@@ -51,8 +51,7 @@ export const AI_PROVIDERS: AIProvider[] = ['DeepSeek', 'Aliyun', 'Gemini', 'Zhip
 
 // 🔥 核心修改：在这里定义 SiliconFlow 支持的真实模型 ID
 export const MODEL_CATALOG: Record<string, string[]> = {
-  // 注意：我们将 Qwen 也放在 DeepSeek 列表里，或者在 App.tsx 里强制指定 Provider 为 DeepSeek
-  // 这样做是为了让 Qwen 也走 SiliconFlow 的 API Endpoint (api.siliconflow.cn)
+  // 注意：我们将 Qwen 也放在 DeepSeek 列表里，统一走服务端代理。
   DeepSeek: [
       'deepseek-ai/DeepSeek-V3',       // 👑 主力战神 (便宜且强)
       'Qwen/Qwen2.5-7B-Instruct',      // 🆓 免费劳工 (极速)

@@ -3,23 +3,7 @@ import { validateAndFixResponse, ConstraintGenerator } from "./logicService";
 import { InformationExtractor } from "./informationService";
 import { DecisionEngine } from "./decisionEngine"; // ✅ 确保你已经创建了这个文件
 import { getPlayerConfig } from '../constants'; 
-
-interface ProviderConfig { endpoint: string; apiKey: string; type: 'openai-compatible' | 'gemini-native'; }
-const ENV = import.meta.env;
-
-const PROVIDER_REGISTRY: Record<AIProvider, ProviderConfig> = {
-    'DeepSeek': { endpoint: "https://api.siliconflow.cn/v1/chat/completions", apiKey: ENV.VITE_DEEPSEEK_API_KEY || "", type: 'openai-compatible' },
-    'Aliyun': { endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", apiKey: ENV.VITE_ALIYUN_API_KEY || "", type: 'openai-compatible' },
-    'Gemini': { endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", apiKey: ENV.VITE_GEMINI_API_KEY || "", type: 'openai-compatible' },
-    'Moonshot': { endpoint: "https://api.moonshot.cn/v1/chat/completions", apiKey: ENV.VITE_MOONSHOT_API_KEY || "", type: 'openai-compatible' },
-    'MiniMax': { endpoint: "https://api.minimax.chat/v1/text/chatcompletion_v2", apiKey: ENV.VITE_MINIMAX_API_KEY || "", type: 'openai-compatible' },
-    'Zhipu': { endpoint: "https://open.bigmodel.cn/api/paas/v4/chat/completions", apiKey: ENV.VITE_ZHIPU_API_KEY || "", type: 'openai-compatible' },
-    'Tencent': { endpoint: "https://api.hunyuan.cloud.tencent.com/v1/chat/completions", apiKey: ENV.VITE_TENCENT_API_KEY || "", type: 'openai-compatible' },
-    'Groq': { endpoint: "https://api.groq.com/openai/v1/chat/completions", apiKey: ENV.VITE_GROQ_API_KEY || "", type: 'openai-compatible' }
-};
-
-const SAFE_FALLBACK_PROVIDER: AIProvider = 'DeepSeek'; 
-const SAFE_FALLBACK_MODEL = "Qwen/Qwen2.5-7B-Instruct"; 
+import { postJson } from "./apiClient";
 
 // --- JSON 清洗工具 ---
 const cleanJSONResponse = (text: string): any => {
@@ -38,34 +22,17 @@ const cleanJSONResponse = (text: string): any => {
 
 // --- API 请求器 ---
 const executeAIRequest = async (provider: AIProvider, initialModel: string, systemPrompt: string, userContent: string, temperature: number): Promise<any> => {
-    let config = PROVIDER_REGISTRY[provider];
-    if (!config || !config.apiKey) {
-        config = PROVIDER_REGISTRY[SAFE_FALLBACK_PROVIDER];
-        initialModel = SAFE_FALLBACK_MODEL;
-    }
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000); 
-    
-    try {
-        const response = await fetch(config.endpoint, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${config.apiKey}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: initialModel, 
-                messages: [ { role: "system", content: systemPrompt }, { role: "user", content: userContent } ],
-                temperature: temperature, 
-                max_tokens: 512
-            }),
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
-        const data = await response.json();
-        return cleanJSONResponse(data.choices[0].message.content || "{}");
-    } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-    }
+    const data = await postJson<{ choices?: Array<{ message?: { content?: string } }> }>('/api/ai-chat', {
+        provider,
+        model: initialModel,
+        messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: userContent },
+        ],
+        temperature,
+        max_tokens: 512,
+    });
+    return cleanJSONResponse(data.choices?.[0]?.message?.content || "{}");
 };
 
 // --- 🔥 [核心] 生成玩家行动 (深度汉化版) ---

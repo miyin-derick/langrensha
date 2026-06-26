@@ -1,4 +1,5 @@
 import { REAL_AUDIO_ASSETS, getPlayerConfig } from "../constants";
+import { postForBlob } from "./apiClient";
 
 // 缓存：用于存储已生成的语音 URL，避免重复扣费
 const audioCache = new Map<string, string>();
@@ -69,39 +70,13 @@ export const speak = async (text: string, playerId: number): Promise<void> => {
         voiceModel = playerConfig.voice;
     }
 
-    const API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY; // 这里复用 DeepSeek Key (SiliconFlow 通用)
-    if (!API_KEY) {
-        console.warn("缺少 API Key，转为浏览器语音兜底");
-        await playBrowserTTS(text);
-        return;
-    }
-
     try {
         console.log(`[TTS] 生成中 (${playerId}号): ${text.substring(0, 10)}...`);
-        const response = await fetch("https://api.siliconflow.cn/v1/audio/speech", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "FunAudioLLM/CosyVoice2-0.5B", // 这里的模型ID是固定的，音色由 voice 参数决定
-                input: text,
-                voice: voiceModel, 
-                response_format: "mp3",
-                sample_rate: 32000,
-                stream: false,
-                speed: playerConfig.speed || 1.0,
-                gain: 0
-            })
+        const blob = await postForBlob("/api/tts", {
+            text,
+            voice: voiceModel,
+            speed: playerConfig.speed || 1.0,
         });
-
-        if (!response.ok) {
-            const errText = await response.text();
-            throw new Error(`TTS API Error: ${response.status} - ${errText}`);
-        }
-
-        const blob = await response.blob();
         const audioUrl = URL.createObjectURL(blob);
 
         // 存入缓存
@@ -132,32 +107,13 @@ export const prefetch = async (text: string, playerId: number): Promise<string |
         voiceModel = playerConfig.voice;
     }
 
-    const API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY;
-    if (!API_KEY) return null;
-
     try {
         console.log(`[TTS] 预加载中 (${playerId}号)...`);
-        const response = await fetch("https://api.siliconflow.cn/v1/audio/speech", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${API_KEY}`,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                model: "FunAudioLLM/CosyVoice2-0.5B",
-                input: text,
-                voice: voiceModel,
-                response_format: "mp3",
-                sample_rate: 32000,
-                stream: false,
-                speed: playerConfig.speed || 1.0,
-                gain: 0
-            })
+        const blob = await postForBlob("/api/tts", {
+            text,
+            voice: voiceModel,
+            speed: playerConfig.speed || 1.0,
         });
-
-        if (!response.ok) return null;
-
-        const blob = await response.blob();
         const audioUrl = URL.createObjectURL(blob);
         trimCache();
         audioCache.set(cacheKey, audioUrl);
