@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
   Player, Role, Phase, GameState, LogMessage, Faction, AnimationEvent, AIProvider, PlayerClaim, SpeechMetadata,
   AIResponse 
@@ -20,6 +20,9 @@ import SubtitleBar from './components/SubtitleBar';
 import SoundManager from './components/SoundManager';
 import StreamLayout from './components/layouts/StreamLayout';
 import DesktopLayout from './components/layouts/DesktopLayout';
+import LandingPage from './components/LandingPage';
+import RoomBanner from './components/RoomBanner';
+import { useRoomSession } from './hooks/useRoomSession';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const shuffle = <T,>(array: T[]): T[] => {
@@ -176,10 +179,12 @@ const App: React.FC = () => {
   
   // 🔥 新增：心声开关状态
   const [showThoughts, setShowThoughts] = useState(false);
+  const [isLocalDemo, setIsLocalDemo] = useState(false);
 
   const autoLoopTimerRef = useRef<any>(null);
   const gameStateRef = useRef(gameState);
   const isProcessingRef = useRef(false);
+  const skipNextPublishRef = useRef(false);
   const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
   const gridContainerRef = useRef<HTMLDivElement>(null);
   const nextTurnTaskRef = useRef<{ id: number; task: Promise<{ res: AIResponse, audioUrl?: string | null }> } | null>(null);
@@ -187,6 +192,15 @@ const App: React.FC = () => {
   
   const enableTTSRef = useRef(enableTTS);
   useEffect(() => { enableTTSRef.current = enableTTS; }, [enableTTS]);
+
+  const applyRemoteState = useCallback((state: GameState) => {
+      skipNextPublishRef.current = true;
+      isProcessingRef.current = false;
+      setIsPlaying(false);
+      setGameState(state);
+  }, []);
+
+  const roomSession = useRoomSession({ currentState: gameState, applyRemoteState });
 
   const isAnyActive = speakingPlayerId !== null || thinkingPlayers.size > 0 || activeBubbles.size > 0;
 
@@ -297,6 +311,16 @@ const App: React.FC = () => {
   useEffect(() => { gameStateRef.current = gameState; }, [gameState]);
 
   useEffect(() => {
+    if (!roomSession.isHost) return;
+    if (skipNextPublishRef.current) {
+      skipNextPublishRef.current = false;
+      return;
+    }
+    roomSession.publishSnapshot(gameState);
+  }, [gameState, roomSession.isHost, roomSession.publishSnapshot]);
+
+  useEffect(() => {
+    if (roomSession.isViewer) return;
     if (autoLoopTimerRef.current) {
         clearTimeout(autoLoopTimerRef.current);
         autoLoopTimerRef.current = null;
@@ -311,14 +335,15 @@ const App: React.FC = () => {
         }
     }
     return () => { if (autoLoopTimerRef.current) clearTimeout(autoLoopTimerRef.current); };
-  }, [gameState.winner, isAutoLoop]); 
+  }, [gameState.winner, isAutoLoop, roomSession.isViewer]); 
 
   useEffect(() => {
+    if (roomSession.isViewer) return;
     if (isPlaying && !gameState.winner && !isProcessingRef.current) {
        const timer = setTimeout(() => { advanceGame(); }, gameSpeed);
        return () => clearTimeout(timer);
     }
-  }, [isPlaying, stepTrigger, gameState.winner, gameSpeed]);
+  }, [isPlaying, stepTrigger, gameState.winner, gameSpeed, roomSession.isViewer]);
 
   const addLog = (state: GameState, type: LogMessage['type'], content: string, senderId?: number, claim?: PlayerClaim, metadata?: SpeechMetadata): GameState => {
     const newTick = (state.globalTick || 0) + 1;
@@ -972,9 +997,26 @@ const App: React.FC = () => {
     setGameState(nextState);
     setStepTrigger(prev => prev + 1);
   };
-  const handleStep = () => { setIsPlaying(false); advanceGame(); };
+  const handleStep = () => {
+    if (roomSession.isViewer) return;
+    setIsPlaying(false);
+    advanceGame();
+  };
+
+  if (!roomSession.isRoom && !isLocalDemo) {
+    return <LandingPage initialState={gameState} onStartLocal={() => setIsLocalDemo(true)} />;
+  }
+
   return (
     <div className="relative w-full h-screen bg-slate-950 overflow-hidden font-sans select-none">
+       <RoomBanner
+          isRoom={roomSession.isRoom}
+          isHost={roomSession.isHost}
+          isViewer={roomSession.isViewer}
+          status={roomSession.status}
+          error={roomSession.error}
+          shareUrl={roomSession.shareUrl}
+       />
        <SoundManager phase={gameState.phase} animation={animation} isMuted={!enableTTS} />
        {!isGreenScreen && <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black z-0"></div>}
        {isGreenScreen && <div className="absolute inset-0 bg-[#00FF00] z-0"></div>}
@@ -1065,7 +1107,7 @@ const App: React.FC = () => {
       </main>
       <ControlPanel 
           isPlaying={isPlaying} 
-          onTogglePlay={() => setIsPlaying(!isPlaying)} 
+          onTogglePlay={() => !roomSession.isViewer && setIsPlaying(!isPlaying)} 
           onStep={handleStep} 
           gameSpeed={gameSpeed} 
           onSpeedChange={setGameSpeed} 
@@ -1083,8 +1125,9 @@ const App: React.FC = () => {
           // 🔥 传入心声控制 props
           showThoughts={showThoughts}
           onToggleThoughts={() => setShowThoughts(!showThoughts)}
+          readOnly={roomSession.isViewer}
       />
-      {gameState.winner && <GameOverModal winner={gameState.winner} players={gameState.players} onViewHistory={() => setIsHistoryOpen(true)} onRestart={() => handleGameReset(false)} />}
+      {gameState.winner && !roomSession.isViewer && <GameOverModal winner={gameState.winner} players={gameState.players} onViewHistory={() => setIsHistoryOpen(true)} onRestart={() => handleGameReset(false)} />}
       {isHistoryOpen && <GameHistoryModal logs={gameState.logs} players={gameState.players} onClose={() => setIsHistoryOpen(false)} />}
     </div>
   );

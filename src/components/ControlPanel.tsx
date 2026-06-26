@@ -8,7 +8,8 @@ const ControlPanel = ({
     isAutoLoop, onToggleAutoLoop,
     isGreenScreen, onToggleGreenScreen,
     // 🔥 新增 props
-    showThoughts, onToggleThoughts
+    showThoughts, onToggleThoughts,
+    readOnly = false
 }: any) => {
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -76,17 +77,19 @@ const ControlPanel = ({
                   {viewMode === 'STREAM' ? '📺' : '🖥️'}
                 </button>
 
-                <button 
-                  onClick={onToggleAutoLoop}
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                    isAutoLoop 
-                      ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)] animate-pulse' 
-                      : 'bg-slate-800/30 text-slate-600 hover:bg-slate-800/80 hover:text-slate-400'
-                  }`}
-                  title="自动下一局"
-                >
-                  🔄
-                </button>
+                {!readOnly && (
+                  <button 
+                    onClick={onToggleAutoLoop}
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                      isAutoLoop 
+                        ? 'bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/50 shadow-[0_0_10px_rgba(59,130,246,0.2)] animate-pulse' 
+                        : 'bg-slate-800/30 text-slate-600 hover:bg-slate-800/80 hover:text-slate-400'
+                    }`}
+                    title="自动下一局"
+                  >
+                    🔄
+                  </button>
+                )}
 
                 <button 
                   onClick={onToggleTTS}
@@ -139,7 +142,7 @@ const ControlPanel = ({
             </div>
 
             <div className="flex gap-2 pl-1">
-              {!gameOver && (
+              {!readOnly && !gameOver && (
                   <>
                     {!isPlaying && (
                         <button 
@@ -163,13 +166,18 @@ const ControlPanel = ({
                   </>
               )}
 
-                {gameOver && (
+                {!readOnly && gameOver && (
                   <button 
                       onClick={()=>window.location.reload()} 
                       className="h-9 px-6 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-lg transition-all"
                   >
                       再来一局
                   </button>
+              )}
+              {readOnly && (
+                  <div className="h-9 px-4 rounded-xl bg-slate-800/40 border border-white/5 text-slate-400 text-xs font-bold flex items-center">
+                      观战中
+                  </div>
               )}
             </div>
           </div>
