@@ -47,10 +47,15 @@ export const PLAYSTYLES: Playstyle[] = [
   { label: "吃瓜乐子人", description: "心态超然", quote: "...", temperature: { think: 0.5, speak: 1.0 } }
 ];
 
-export const AI_PROVIDERS: AIProvider[] = ['DeepSeek', 'Aliyun', 'Gemini', 'Zhipu', 'Moonshot', 'MiniMax', 'Tencent', 'Groq'];
+export const AI_PROVIDERS: AIProvider[] = ['OpenAI', 'DeepSeek', 'Aliyun', 'Gemini', 'Zhipu', 'Moonshot', 'MiniMax', 'Tencent', 'Groq'];
 
 // 🔥 核心修改：在这里定义 SiliconFlow 支持的真实模型 ID
 export const MODEL_CATALOG: Record<string, string[]> = {
+  OpenAI: [
+      'gpt-4.1-mini',
+      'gpt-4.1',
+      'gpt-5.5'
+  ],
   // 注意：我们将 Qwen 也放在 DeepSeek 列表里，统一走服务端代理。
   DeepSeek: [
       'deepseek-ai/DeepSeek-V3',       // 👑 主力战神 (便宜且强)
@@ -68,6 +73,7 @@ export const MODEL_CATALOG: Record<string, string[]> = {
 };
 
 export const PROVIDER_CONFIG = {
+  OpenAI:   { label: 'OpenAI',   icon: '●', color: 'text-green-400', bg: 'bg-green-900/40', border: 'border-green-500/50' },
   DeepSeek: { label: 'SiliconFlow', icon: '⚡', color: 'text-blue-400', bg: 'bg-blue-900/40', border: 'border-blue-500/50' },
   Aliyun:   { label: '通义千问', icon: '🔶', color: 'text-orange-400', bg: 'bg-orange-900/40', border: 'border-orange-500/50' },
   Gemini:   { label: 'Gemini',   icon: '🌟', color: 'text-fuchsia-400', bg: 'bg-fuchsia-900/40', border: 'border-fuchsia-500/50' },

@@ -101,10 +101,11 @@ Server-only variables:
 ```text
 SUPABASE_SERVICE_ROLE_KEY
 ROOM_TOKEN_SECRET
+OPENAI_API_KEY
 DEEPSEEK_API_KEY
 ```
 
-Optional server-only provider keys can be added for Gemini, Aliyun, Moonshot, MiniMax, Zhipu, Tencent, and Groq.
+Optional server-only provider keys can be added for Gemini, Aliyun, Moonshot, MiniMax, Zhipu, Tencent, and Groq. For local testing, put private values in `.env.local` and never commit them to Git.
 
 The host creates a room from `/`, shares `/room/<roomId>` with a friend, and controls playback from `/room/<roomId>?host=1`. The viewer link is read-only.
 🧠 System Architecture

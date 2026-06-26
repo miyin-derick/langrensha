@@ -96,10 +96,11 @@ VITE_SUPABASE_ANON_KEY
 ```text
 SUPABASE_SERVICE_ROLE_KEY
 ROOM_TOKEN_SECRET
+OPENAI_API_KEY
 DEEPSEEK_API_KEY
 ```
 
-其他模型供应商的 key 可以按需配置，全部放在 Vercel 服务端环境变量中，不要使用 `VITE_` 前缀。
+其他模型供应商的 key 可以按需配置，全部放在 Vercel 服务端环境变量中，不要使用 `VITE_` 前缀。本地测试时可以把这些私密变量放到 `.env.local`，不要提交到 Git。
 
 房主从 `/` 创建房间后进入 `/room/<roomId>?host=1`，复制 `/room/<roomId>` 发给朋友。朋友页面是只读观战，不能推进或重开对局。
 🧠 系统架构 (System Architecture)

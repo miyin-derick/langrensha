@@ -7,6 +7,10 @@ interface ProviderConfig {
 
 export function getProviderConfig(provider: AIProvider): ProviderConfig {
   const registry: Record<AIProvider, ProviderConfig> = {
+    OpenAI: {
+      endpoint: 'https://api.openai.com/v1/chat/completions',
+      apiKey: process.env.OPENAI_API_KEY || '',
+    },
     DeepSeek: {
       endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
       apiKey: process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY || '',
