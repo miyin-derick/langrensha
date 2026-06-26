@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: body.model,
+        model: config.modelOverride || body.model,
         messages: body.messages,
         temperature: body.temperature ?? 0.7,
         max_tokens: body.max_tokens ?? 512,

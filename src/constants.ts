@@ -47,7 +47,27 @@ export const PLAYSTYLES: Playstyle[] = [
   { label: "吃瓜乐子人", description: "心态超然", quote: "...", temperature: { think: 0.5, speak: 1.0 } }
 ];
 
-export const AI_PROVIDERS: AIProvider[] = ['OpenAI', 'DeepSeek', 'Aliyun', 'Gemini', 'Zhipu', 'Moonshot', 'MiniMax', 'Tencent', 'Groq'];
+export const AI_PROVIDERS: AIProvider[] = ['OpenAI', 'DeepSeek', 'Doubao', 'Aliyun', 'Gemini', 'Zhipu', 'Moonshot', 'MiniMax', 'Tencent', 'Groq'];
+
+export interface AIModelSeat {
+  provider: AIProvider;
+  model: string;
+}
+
+export const DEFAULT_AI_ROSTER: AIModelSeat[] = [
+  { provider: 'OpenAI', model: 'gpt-4.1-mini' },
+  { provider: 'OpenAI', model: 'gpt-4.1-mini' },
+  { provider: 'OpenAI', model: 'gpt-4.1-mini' },
+  { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' },
+  { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' },
+  { provider: 'Zhipu', model: 'glm-4-flash' },
+  { provider: 'Zhipu', model: 'glm-4-flash' },
+  { provider: 'Zhipu', model: 'glm-4-flash' },
+  { provider: 'Doubao', model: 'doubao-seed-2-0-lite-260428' },
+  { provider: 'Moonshot', model: 'moonshot-v1-8k' },
+  { provider: 'Aliyun', model: 'qwen-plus' },
+  { provider: 'Aliyun', model: 'qwen-plus' },
+];
 
 // 🔥 核心修改：在这里定义 SiliconFlow 支持的真实模型 ID
 export const MODEL_CATALOG: Record<string, string[]> = {
@@ -55,6 +75,10 @@ export const MODEL_CATALOG: Record<string, string[]> = {
       'gpt-4.1-mini',
       'gpt-4.1',
       'gpt-5.5'
+  ],
+  Doubao: [
+      'doubao-seed-2-0-lite-260428',
+      'doubao-seed-1-6-flash-250615'
   ],
   // 注意：我们将 Qwen 也放在 DeepSeek 列表里，统一走服务端代理。
   DeepSeek: [
@@ -75,6 +99,7 @@ export const MODEL_CATALOG: Record<string, string[]> = {
 export const PROVIDER_CONFIG = {
   OpenAI:   { label: 'OpenAI',   icon: '●', color: 'text-green-400', bg: 'bg-green-900/40', border: 'border-green-500/50' },
   DeepSeek: { label: 'SiliconFlow', icon: '⚡', color: 'text-blue-400', bg: 'bg-blue-900/40', border: 'border-blue-500/50' },
+  Doubao:   { label: '豆包',     icon: '豆', color: 'text-pink-400', bg: 'bg-pink-900/40', border: 'border-pink-500/50' },
   Aliyun:   { label: '通义千问', icon: '🔶', color: 'text-orange-400', bg: 'bg-orange-900/40', border: 'border-orange-500/50' },
   Gemini:   { label: 'Gemini',   icon: '🌟', color: 'text-fuchsia-400', bg: 'bg-fuchsia-900/40', border: 'border-fuchsia-500/50' },
   Zhipu:    { label: '智谱GLM',  icon: '🧠', color: 'text-teal-400', bg: 'bg-teal-900/40', border: 'border-teal-500/50' },

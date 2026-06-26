@@ -13,7 +13,7 @@ export enum Faction {
   BAD = 'BAD'
 }
 
-export type AIProvider = 'OpenAI' | 'DeepSeek' | 'Gemini' | 'Aliyun' | 'Zhipu' | 'Moonshot' | 'MiniMax' | 'Tencent' | 'Groq';
+export type AIProvider = 'OpenAI' | 'DeepSeek' | 'Doubao' | 'Gemini' | 'Aliyun' | 'Zhipu' | 'Moonshot' | 'MiniMax' | 'Tencent' | 'Groq';
 
 export enum Phase {
   SETUP = 'SETUP',

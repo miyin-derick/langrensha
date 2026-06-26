@@ -97,7 +97,10 @@ VITE_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ROOM_TOKEN_SECRET
 OPENAI_API_KEY
+OPENAI_MODEL
 DEEPSEEK_API_KEY
+DOUBAO_API_KEY
+DOUBAO_MODEL
 ```
 
 其他模型供应商的 key 可以按需配置，全部放在 Vercel 服务端环境变量中，不要使用 `VITE_` 前缀。本地测试时可以把这些私密变量放到 `.env.local`，不要提交到 Git。

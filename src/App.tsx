@@ -4,7 +4,7 @@ import {
   AIResponse 
 } from './types';
 import { 
-  AI_NAMES, INITIAL_ROLE_DISTRIBUTION, AI_PROVIDERS, ROLE_CONFIG, MODEL_CATALOG, PLAYSTYLES, 
+  INITIAL_ROLE_DISTRIBUTION, ROLE_CONFIG, PLAYSTYLES, DEFAULT_AI_ROSTER,
   getPlayerConfig 
 } from './constants';
 import { generatePlayerTurn } from './services/geminiService';
@@ -109,19 +109,13 @@ const generateSpeakingOrder = (players: Player[], sheriffId: number | null, nigh
   return shuffle(aliveIds); 
 };
 
-const assignModelByRole = (role: Role): { provider: AIProvider, model: string } => {
-    if (role === Role.WEREWOLF || role === Role.SEER || role === Role.WITCH || role === Role.GUARD || role === Role.HUNTER) {
-        return { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' };
-    }
-    return { provider: 'DeepSeek', model: 'Qwen/Qwen2.5-7B-Instruct' };
-};
-
 const createInitialState = (): GameState => {
   const shuffledRoles = shuffle(INITIAL_ROLE_DISTRIBUTION);
+  const shuffledModelSeats = shuffle(DEFAULT_AI_ROSTER);
   const players: Player[] = shuffledRoles.map((role, index) => {
     const id = index + 1;
     const config = getPlayerConfig(id);
-    const { provider, model } = assignModelByRole(role);
+    const { provider, model } = shuffledModelSeats[index];
     const style = PLAYSTYLES[Math.floor(Math.random() * PLAYSTYLES.length)];
 
     return {

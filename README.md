@@ -102,7 +102,10 @@ Server-only variables:
 SUPABASE_SERVICE_ROLE_KEY
 ROOM_TOKEN_SECRET
 OPENAI_API_KEY
+OPENAI_MODEL
 DEEPSEEK_API_KEY
+DOUBAO_API_KEY
+DOUBAO_MODEL
 ```
 
 Optional server-only provider keys can be added for Gemini, Aliyun, Moonshot, MiniMax, Zhipu, Tencent, and Groq. For local testing, put private values in `.env.local` and never commit them to Git.

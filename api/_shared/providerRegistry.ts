@@ -3,6 +3,7 @@ import type { AIProvider } from '../../src/types';
 interface ProviderConfig {
   endpoint: string;
   apiKey: string;
+  modelOverride?: string;
 }
 
 export function getProviderConfig(provider: AIProvider): ProviderConfig {
@@ -10,10 +11,16 @@ export function getProviderConfig(provider: AIProvider): ProviderConfig {
     OpenAI: {
       endpoint: 'https://api.openai.com/v1/chat/completions',
       apiKey: process.env.OPENAI_API_KEY || '',
+      modelOverride: process.env.OPENAI_MODEL,
     },
     DeepSeek: {
       endpoint: 'https://api.siliconflow.cn/v1/chat/completions',
       apiKey: process.env.DEEPSEEK_API_KEY || process.env.SILICONFLOW_API_KEY || '',
+    },
+    Doubao: {
+      endpoint: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+      apiKey: process.env.DOUBAO_API_KEY || process.env.ARK_API_KEY || '',
+      modelOverride: process.env.DOUBAO_MODEL,
     },
     Aliyun: {
       endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
