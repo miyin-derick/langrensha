@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { hashHostToken, verifyHostTokenHash } from '../api/_shared/roomAuth';
 import { getProviderConfig } from '../api/_shared/providerRegistry';
 import { DEFAULT_AI_ROSTER } from '../src/constants';
@@ -40,5 +42,20 @@ assert.deepEqual(providerCounts, {
   Moonshot: 1,
   Aliyun: 2,
 });
+
+const collectTsFiles = (dir: string): string[] =>
+  readdirSync(dir).flatMap((entry) => {
+    const path = join(dir, entry);
+    return statSync(path).isDirectory() ? collectTsFiles(path) : path.endsWith('.ts') ? [path] : [];
+  });
+
+const extensionlessRuntimeImports = collectTsFiles('api').flatMap((file) => {
+  const source = readFileSync(file, 'utf8');
+  return [...source.matchAll(/import\s+(?!type\b)[^'"]+from\s+['"](\.{1,2}\/[^'"]+)['"]/g)]
+    .map((match) => ({ file, specifier: match[1] }))
+    .filter(({ specifier }) => !/\.(js|json)$/.test(specifier));
+});
+
+assert.deepEqual(extensionlessRuntimeImports, []);
 
 console.log('self-check passed');

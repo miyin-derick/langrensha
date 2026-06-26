@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { GameState } from '../../src/types';
-import { assertHostToken, assertRoomId, hashHostToken } from '../_shared/roomAuth';
-import { createSupabaseAdmin } from '../_shared/supabaseAdmin';
+import { assertHostToken, assertRoomId, hashHostToken } from '../_shared/roomAuth.js';
+import { createSupabaseAdmin } from '../_shared/supabaseAdmin.js';
 
 interface CreateRoomRequestBody {
   roomId: string;

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import type { AIProvider } from '../src/types';
-import { getProviderConfig } from './_shared/providerRegistry';
+import { getProviderConfig } from './_shared/providerRegistry.js';
 
 interface ChatRequestBody {
   provider: AIProvider;
