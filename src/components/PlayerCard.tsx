@@ -156,7 +156,7 @@ const PlayerCard = forwardRef<HTMLDivElement, any>(({ player, isSpeaking, reveal
                </div>
                <div className={`relative z-20 -mr-1 -mt-1 px-3 py-1 rounded-lg flex items-center gap-1.5 ${modelBadgeStyle}`}>
                    <span className="text-sm opacity-100 font-bold">{provider.icon}</span>
-                   <span className="text-xs font-bold tracking-tight uppercase">DeepSeek</span>
+                   <span className="text-xs font-bold tracking-tight uppercase">{provider.label}</span>
                </div>
            </div>
 
