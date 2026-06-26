@@ -57,7 +57,7 @@ export interface AIModelSeat {
 export const DEFAULT_AI_ROSTER: AIModelSeat[] = [
   { provider: 'OpenAI', model: 'gpt-4.1-mini' },
   { provider: 'OpenAI', model: 'gpt-4.1-mini' },
-  { provider: 'OpenAI', model: 'gpt-4.1-mini' },
+  { provider: 'Gemini', model: 'gemini-1.5-flash' },
   { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' },
   { provider: 'DeepSeek', model: 'deepseek-ai/DeepSeek-V3' },
   { provider: 'Zhipu', model: 'glm-4-flash' },

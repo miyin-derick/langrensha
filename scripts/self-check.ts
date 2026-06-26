@@ -32,7 +32,8 @@ const providerCounts = DEFAULT_AI_ROSTER.reduce<Record<string, number>>((counts,
 
 assert.equal(DEFAULT_AI_ROSTER.length, 12);
 assert.deepEqual(providerCounts, {
-  OpenAI: 3,
+  OpenAI: 2,
+  Gemini: 1,
   DeepSeek: 2,
   Zhipu: 3,
   Doubao: 1,
