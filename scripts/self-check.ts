@@ -32,6 +32,13 @@ assert.equal(doubaoConfig.endpoint, 'https://ark.cn-beijing.volces.com/api/v3/ch
 assert.equal(doubaoConfig.apiKey, 'test-doubao-key');
 assert.equal(doubaoConfig.modelOverride, 'test-doubao-model');
 
+process.env.ALIYUN_API_KEY = 'test-aliyun-key';
+process.env.ALIYUN_MODEL = 'test-aliyun-model';
+const aliyunConfig = getProviderConfig('Aliyun');
+assert.equal(aliyunConfig.endpoint, 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions');
+assert.equal(aliyunConfig.apiKey, 'test-aliyun-key');
+assert.equal(aliyunConfig.modelOverride, 'test-aliyun-model');
+
 const providerCounts = DEFAULT_AI_ROSTER.reduce<Record<string, number>>((counts, seat) => {
   counts[seat.provider] = (counts[seat.provider] || 0) + 1;
   return counts;
@@ -56,7 +63,7 @@ assert.equal(rosterModelsByProvider.OpenAI, undefined);
 assert.equal(rosterModelsByProvider.Gemini, undefined);
 assert.deepEqual(rosterModelsByProvider.Doubao, ['doubao-seed-2-0-lite-260428', 'doubao-seed-2-0-lite-260428']);
 assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-4.7-flash', 'glm-4.7-flash', 'glm-4.7-flash']);
-assert.deepEqual(rosterModelsByProvider.Aliyun, ['qwen-plus', 'qwen-plus', 'qwen-plus']);
+assert.deepEqual(rosterModelsByProvider.Aliyun, ['qwen3.7-plus', 'qwen3.7-plus', 'qwen3.7-plus']);
 
 const supabaseSchema = readFileSync('supabase/schema.sql', 'utf8');
 assert.match(supabaseSchema, /grant select on public\.rooms to anon, authenticated;/);

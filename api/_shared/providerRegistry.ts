@@ -38,6 +38,7 @@ export function getProviderConfig(provider: AIProvider): ProviderConfig {
     Aliyun: {
       endpoint: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
       apiKey: process.env.ALIYUN_API_KEY || '',
+      modelOverride: process.env.ALIYUN_MODEL,
     },
     Gemini: {
       endpoint: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',

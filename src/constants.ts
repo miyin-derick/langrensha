@@ -55,7 +55,7 @@ export interface AIModelSeat {
 }
 
 export const DEFAULT_AI_ROSTER: AIModelSeat[] = [
-  { provider: 'Aliyun', model: 'qwen-plus' },
+  { provider: 'Aliyun', model: 'qwen3.7-plus' },
   { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
   { provider: 'Doubao', model: 'doubao-seed-2-0-lite-260428' },
   { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
@@ -65,8 +65,8 @@ export const DEFAULT_AI_ROSTER: AIModelSeat[] = [
   { provider: 'Zhipu', model: 'glm-4.7-flash' },
   { provider: 'Doubao', model: 'doubao-seed-2-0-lite-260428' },
   { provider: 'Moonshot', model: 'moonshot-v1-8k' },
-  { provider: 'Aliyun', model: 'qwen-plus' },
-  { provider: 'Aliyun', model: 'qwen-plus' },
+  { provider: 'Aliyun', model: 'qwen3.7-plus' },
+  { provider: 'Aliyun', model: 'qwen3.7-plus' },
 ];
 
 // 🔥 核心修改：在这里定义 SiliconFlow 支持的真实模型 ID
@@ -88,7 +88,7 @@ export const MODEL_CATALOG: Record<string, string[]> = {
       'Qwen/Qwen2.5-72B-Instruct',     // 🚀 备用强力模型
       'InternLM/internlm2_5-7b-chat'   // 🚀 备用免费模型
   ], 
-  Aliyun:   ['qwen-plus', 'qwen-max'], 
+  Aliyun:   ['qwen3.7-plus', 'qwen-plus', 'qwen-max'],
   Gemini:   ['gemini-3.5-flash'], 
   Zhipu:    ['glm-4.7-flash', 'glm-4.5-flash'], 
   Moonshot: ['moonshot-v1-8k'], 
