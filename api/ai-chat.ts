@@ -24,6 +24,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const config = getProviderConfig(body.provider);
+    const requestBody: Record<string, unknown> = {
+      model: config.modelOverride || body.model,
+      messages: body.messages,
+      temperature: body.temperature ?? 0.7,
+      max_tokens: body.max_tokens ?? 512,
+    };
+    if (body.provider === 'Aliyun') {
+      requestBody.enable_thinking = false;
+    }
+    if (body.provider === 'DeepSeek' || body.provider === 'Doubao' || body.provider === 'Zhipu') {
+      requestBody.thinking = { type: 'disabled' };
+    }
+
     const response = await fetch(config.endpoint, {
       method: 'POST',
       signal: AbortSignal.timeout(12_000),
@@ -31,12 +44,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         Authorization: `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: config.modelOverride || body.model,
-        messages: body.messages,
-        temperature: body.temperature ?? 0.7,
-        max_tokens: body.max_tokens ?? 512,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const text = await response.text();

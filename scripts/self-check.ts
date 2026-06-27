@@ -77,9 +77,18 @@ assert.deepEqual(vercelConfig.rewrites, [
 const aiChatSource = readFileSync('api/ai-chat.ts', 'utf8');
 assert.match(aiChatSource, /AbortSignal\.timeout\(12_000\)/);
 assert.match(aiChatSource, /status\(504\)/);
+assert.match(aiChatSource, /enable_thinking\s*=\s*false/);
+assert.match(aiChatSource, /thinking\s*=\s*\{\s*type:\s*'disabled'\s*\}/);
+assert.match(aiChatSource, /body\.provider === 'DeepSeek' \|\| body\.provider === 'Doubao' \|\| body\.provider === 'Zhipu'/);
 
 const aiTurnSource = readFileSync('src/services/geminiService.ts', 'utf8');
-assert.match(aiTurnSource, /max_tokens:\s*320/);
+assert.match(aiTurnSource, /max_tokens:\s*220/);
+assert.match(aiTurnSource, /speech.*60字以内/);
+assert.match(aiTurnSource, /providerQueues/);
+assert.match(aiTurnSource, /providerCooldownMs/);
+assert.match(aiTurnSource, /isTransientProviderError/);
+assert.match(aiTurnSource, /fallbackModel/);
+assert.match(aiTurnSource, /runWithProviderQueue\(provider/);
 
 const ttsServiceSource = readFileSync('src/services/ttsService.ts', 'utf8');
 assert.doesNotMatch(ttsServiceSource, /postForBlob\("\/api\/tts"/);

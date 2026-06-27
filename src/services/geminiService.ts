@@ -5,6 +5,34 @@ import { DecisionEngine } from "./decisionEngine"; // ✅ 确保你已经创建�
 import { getPlayerConfig } from '../constants'; 
 import { postJson } from "./apiClient";
 
+const providerQueues = new Map<AIProvider, Promise<void>>();
+const providerReadyAt = new Map<AIProvider, number>();
+const providerCooldownMs: Partial<Record<AIProvider, number>> = { Zhipu: 3500 };
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const fallbackModel = 'deepseek-v4-flash';
+const isTransientProviderError = (error: unknown) =>
+    error instanceof Error && /1302|1305|速率限制|访问量过大|稍后再试|timed out|Timeout|fetch failed|Failed to fetch/.test(error.message);
+
+const runWithProviderQueue = async <T>(provider: AIProvider, task: () => Promise<T>): Promise<T> => {
+    const previous = providerQueues.get(provider) ?? Promise.resolve();
+    let release = () => {};
+    const current = new Promise<void>((resolve) => { release = resolve; });
+    const next = previous.catch(() => undefined).then(() => current);
+    providerQueues.set(provider, next);
+
+    await previous.catch(() => undefined);
+    const waitMs = Math.max(0, (providerReadyAt.get(provider) ?? 0) - Date.now());
+    if (waitMs > 0) await delay(waitMs);
+
+    try {
+        return await task();
+    } finally {
+        providerReadyAt.set(provider, Date.now() + (providerCooldownMs[provider] ?? 0));
+        release();
+        if (providerQueues.get(provider) === next) providerQueues.delete(provider);
+    }
+};
+
 // --- JSON 清洗工具 ---
 const cleanJSONResponse = (text: string): any => {
     try {
@@ -22,15 +50,29 @@ const cleanJSONResponse = (text: string): any => {
 
 // --- API 请求器 ---
 const executeAIRequest = async (provider: AIProvider, initialModel: string, systemPrompt: string, userContent: string, temperature: number): Promise<any> => {
-    const data = await postJson<{ choices?: Array<{ message?: { content?: string } }> }>('/api/ai-chat', {
-        provider,
-        model: initialModel,
+    const request = (requestProvider: AIProvider, model: string) => postJson<{ choices?: Array<{ message?: { content?: string } }> }>('/api/ai-chat', {
+        provider: requestProvider,
+        model,
         messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
         ],
         temperature,
-        max_tokens: 320,
+        max_tokens: 220,
+    });
+    const data = await runWithProviderQueue(provider, async () => {
+        try {
+            return await request(provider, initialModel);
+        } catch (error) {
+            if (!isTransientProviderError(error)) throw error;
+            await delay(4000);
+            try {
+                return await request(provider, initialModel);
+            } catch (retryError) {
+                if (provider === 'DeepSeek' || !isTransientProviderError(retryError)) throw retryError;
+                return runWithProviderQueue('DeepSeek', () => request('DeepSeek', fallbackModel));
+            }
+        }
     });
     return cleanJSONResponse(data.choices?.[0]?.message?.content || "{}");
 };
@@ -80,6 +122,7 @@ ${visibleLogs.length > 0 ? visibleLogs.join('\n') : "(暂无最近消息)"}
 3. **内心独白 (thought)**: 诚实地记录你的战术思考（仅观众可见）。
 4. **公开言论 (speech)**: 这是最重要的！不仅面向玩家，也面向看游戏的观众！！这是你对所有人说的话（如果你是狼人，必须在 speech 里伪装，但 thought 要诚实）。
 5. **行动参数**: 必须包含 voteTarget。
+6. **长度限制**: speech 控制在60字以内，thought 控制在40字以内，节奏要像真人短发言。
 
 JSON 格式示例:
 {
