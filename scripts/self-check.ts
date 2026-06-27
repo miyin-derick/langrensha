@@ -62,6 +62,11 @@ const supabaseSchema = readFileSync('supabase/schema.sql', 'utf8');
 assert.match(supabaseSchema, /grant select on public\.rooms to anon, authenticated;/);
 assert.match(supabaseSchema, /alter publication supabase_realtime add table public\.rooms;/);
 
+const vercelConfig = JSON.parse(readFileSync('vercel.json', 'utf8'));
+assert.deepEqual(vercelConfig.rewrites, [
+  { source: '/room/:path*', destination: '/' },
+]);
+
 const collectTsFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
