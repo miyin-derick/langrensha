@@ -30,7 +30,7 @@ const executeAIRequest = async (provider: AIProvider, initialModel: string, syst
             { role: "user", content: userContent },
         ],
         temperature,
-        max_tokens: 512,
+        max_tokens: 320,
     });
     return cleanJSONResponse(data.choices?.[0]?.message?.content || "{}");
 };

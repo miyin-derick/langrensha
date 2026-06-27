@@ -26,6 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const config = getProviderConfig(body.provider);
     const response = await fetch(config.endpoint, {
       method: 'POST',
+      signal: AbortSignal.timeout(12_000),
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',
@@ -43,6 +44,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Content-Type', response.headers.get('content-type') || 'application/json');
     res.send(text);
   } catch (error) {
+    if (error instanceof Error && error.name === 'TimeoutError') {
+      res.status(504).json({ error: 'AI provider timed out' });
+      return;
+    }
     res.status(500).json({ error: error instanceof Error ? error.message : 'Unknown error' });
   }
 }

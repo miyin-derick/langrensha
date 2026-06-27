@@ -67,6 +67,13 @@ assert.deepEqual(vercelConfig.rewrites, [
   { source: '/room/:path*', destination: '/' },
 ]);
 
+const aiChatSource = readFileSync('api/ai-chat.ts', 'utf8');
+assert.match(aiChatSource, /AbortSignal\.timeout\(12_000\)/);
+assert.match(aiChatSource, /status\(504\)/);
+
+const aiTurnSource = readFileSync('src/services/geminiService.ts', 'utf8');
+assert.match(aiTurnSource, /max_tokens:\s*320/);
+
 const collectTsFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
