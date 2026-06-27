@@ -74,6 +74,10 @@ assert.match(aiChatSource, /status\(504\)/);
 const aiTurnSource = readFileSync('src/services/geminiService.ts', 'utf8');
 assert.match(aiTurnSource, /max_tokens:\s*320/);
 
+const ttsServiceSource = readFileSync('src/services/ttsService.ts', 'utf8');
+assert.doesNotMatch(ttsServiceSource, /postForBlob\("\/api\/tts"/);
+assert.match(ttsServiceSource, /export const prefetch[\s\S]+return null;/);
+
 const collectTsFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
