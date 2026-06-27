@@ -39,13 +39,11 @@ const providerCounts = DEFAULT_AI_ROSTER.reduce<Record<string, number>>((counts,
 
 assert.equal(DEFAULT_AI_ROSTER.length, 12);
 assert.deepEqual(providerCounts, {
-  OpenAI: 2,
-  Gemini: 1,
-  DeepSeek: 2,
+  DeepSeek: 3,
   Zhipu: 3,
-  Doubao: 1,
+  Doubao: 2,
   Moonshot: 1,
-  Aliyun: 2,
+  Aliyun: 3,
 });
 
 const rosterModelsByProvider = DEFAULT_AI_ROSTER.reduce<Record<string, string[]>>((models, seat) => {
@@ -53,9 +51,12 @@ const rosterModelsByProvider = DEFAULT_AI_ROSTER.reduce<Record<string, string[]>
   return models;
 }, {});
 
-assert.deepEqual(rosterModelsByProvider.DeepSeek, ['deepseek-v4-flash', 'deepseek-v4-flash']);
-assert.deepEqual(rosterModelsByProvider.Gemini, ['gemini-3.5-flash']);
+assert.deepEqual(rosterModelsByProvider.DeepSeek, ['deepseek-v4-flash', 'deepseek-v4-flash', 'deepseek-v4-flash']);
+assert.equal(rosterModelsByProvider.OpenAI, undefined);
+assert.equal(rosterModelsByProvider.Gemini, undefined);
+assert.deepEqual(rosterModelsByProvider.Doubao, ['doubao-seed-2-0-lite-260428', 'doubao-seed-2-0-lite-260428']);
 assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-4.7-flash', 'glm-4.7-flash', 'glm-4.7-flash']);
+assert.deepEqual(rosterModelsByProvider.Aliyun, ['qwen-plus', 'qwen-plus', 'qwen-plus']);
 
 const collectTsFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((entry) => {
