@@ -5,7 +5,8 @@ import { hashHostToken, verifyHostTokenHash } from '../api/_shared/roomAuth';
 import { getProviderConfig } from '../api/_shared/providerRegistry';
 import { DEFAULT_AI_ROSTER } from '../src/constants';
 import { InformationExtractor } from '../src/services/informationService';
-import { Phase, Role, type GameState } from '../src/types';
+import { determineWinner } from '../src/services/logicService';
+import { Faction, Phase, Role, type GameState, type Player } from '../src/types';
 
 const roomId = 'room_abc123';
 const token = 'abcdefghijklmnopqrstuvwxyz123456';
@@ -102,6 +103,36 @@ assert.match(InformationExtractor.getCompactRoleClaims(claimMemoryState), /1号�
 assert.match(InformationExtractor.getCompactRoleClaims(claimMemoryState), /2号自称女巫/);
 assert.match(InformationExtractor.getPublicMemory(claimMemoryState), /公开身份声明：.*1号自称预言家/);
 assert.doesNotMatch(InformationExtractor.getSituationSummary(claimMemoryState), /狼人\d|好人\d/);
+
+const playerForVictory = (id: number, role: Role, isAlive = true) => ({ id, role, isAlive }) as Player;
+
+assert.equal(
+  determineWinner([
+    playerForVictory(1, Role.WEREWOLF),
+    playerForVictory(2, Role.WEREWOLF),
+    playerForVictory(3, Role.SEER),
+    playerForVictory(4, Role.VILLAGER),
+    playerForVictory(5, Role.WITCH, false),
+  ]),
+  Faction.BAD,
+);
+assert.equal(
+  determineWinner([
+    playerForVictory(1, Role.WEREWOLF),
+    playerForVictory(2, Role.SEER),
+    playerForVictory(3, Role.VILLAGER),
+    playerForVictory(4, Role.WITCH),
+  ]),
+  null,
+);
+assert.equal(
+  determineWinner([
+    playerForVictory(1, Role.WEREWOLF, false),
+    playerForVictory(2, Role.SEER),
+    playerForVictory(3, Role.VILLAGER),
+  ]),
+  Faction.GOOD,
+);
 
 const supabaseSchema = readFileSync('supabase/schema.sql', 'utf8');
 assert.match(supabaseSchema, /grant select on public\.rooms to anon, authenticated;/);

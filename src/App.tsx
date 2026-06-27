@@ -23,6 +23,7 @@ import DesktopLayout from './components/layouts/DesktopLayout';
 import LandingPage from './components/LandingPage';
 import RoomBanner from './components/RoomBanner';
 import { useRoomSession } from './hooks/useRoomSession';
+import { determineWinner } from './services/logicService';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const shuffle = <T,>(array: T[]): T[] => {
@@ -360,13 +361,9 @@ const App: React.FC = () => {
     if (newState) await speak("语音已开启", 0); else cancelSpeech();
   };
 
-  const checkVictory = (players: Player[]): Faction | null => {
-      const wolves = players.filter(p => p.role === Role.WEREWOLF && p.isAlive).length;
-      const villagers = players.filter(p => p.role === Role.VILLAGER && p.isAlive).length;
-      const gods = players.filter(p => [Role.SEER, Role.WITCH, Role.HUNTER, Role.GUARD].includes(p.role) && p.isAlive).length;
-      if (wolves === 0) return Faction.GOOD;
-      if (villagers === 0 || gods === 0) return Faction.BAD; 
-      return null;
+  const settleVictory = (state: GameState): GameState => {
+      const winner = determineWinner(state.players);
+      return winner ? { ...state, winner, phase: Phase.GAME_OVER } : state;
   };
 
   const callAI = async (player: Player, state: GameState, context: string) => {
@@ -484,6 +481,7 @@ const App: React.FC = () => {
                     addHighlight(`💥 猎人开枪! ${player.id} 带走 ${target.id}`); 
                     setAnimation({ type: 'GUN', text: `带走 ${target.id}号`, targetId: target.id });
                     await performSpeech(`${player.id}号猎人开枪带走了 ${target.id}号`);
+                    state = settleVictory(state);
                 }
             } else {
                  state = addLog(state, 'SYSTEM', `${player.id}号猎人放弃开枪`);
@@ -760,7 +758,7 @@ const App: React.FC = () => {
                      const p = nextState.players.find(pl => pl.id === d);
                      if (p && p.role === Role.HUNTER) {
                          const res = await handleHunterShoot(nextState, d);
-                         if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; } 
+                         if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
                          nextState = res.state;
                      }
                      if (p && p.isSheriff) {
@@ -768,6 +766,9 @@ const App: React.FC = () => {
                          if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; } 
                      }
                 }
+                await performSpeech(`昨夜 ${deathText} 倒牌。`);
+                nextState = settleVictory(nextState);
+                if (nextState.winner) break;
                 
                 if (nextState.day === 1) {
                     nextState.discussionQueue = [...deaths]; nextState.nextPhaseAfterLastWords = Phase.DAY_DISCUSS; nextState.phase = Phase.DAY_LAST_WORDS;
@@ -781,7 +782,6 @@ const App: React.FC = () => {
                     const nextSpeakerId = calculatedQueue[0]; const nextP = nextState.players.find(p => p.id === nextSpeakerId);
                     if (nextP) startFastTrack(nextP, nextState, getSpeechContext(Phase.DAY_DISCUSS, false));
                 }
-                await performSpeech(`昨夜 ${deathText} 倒牌。`);
             } else {
                 nextState = addLog(nextState, 'SYSTEM', '昨夜平安夜'); nextState.phase = Phase.DAY_DISCUSS;
                 calculatedQueue = generateSpeakingOrder(nextState.players, nextState.sheriffId, []);
@@ -958,8 +958,9 @@ const App: React.FC = () => {
                     if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
                     nextState = newState; if (killedId) deadPlayers.push(killedId);
                 }
+                nextState = settleVictory(nextState);
+                if (nextState.winner) break;
                 nextState.discussionQueue = deadPlayers; nextState.nextPhaseAfterLastWords = Phase.NIGHT_START; nextState.phase = Phase.DAY_LAST_WORDS;
-                const w = checkVictory(nextState.players); if (w) { nextState.winner = w; nextState.phase = Phase.GAME_OVER; }
             } else if (dayWinners.length > 1) {
                 if (isDayPK) nextState.phase = Phase.NIGHT_START;
                 else {

@@ -1,6 +1,6 @@
 
 
-import { GameState, Player, Role, Phase } from "../types";
+import { Faction, GameState, Player, Role, Phase } from "../types";
 import { PhaseConstraints, RoleConstraints, GameConstraints, AIProvider } from "../types";
 
 export class ConstraintGenerator {
@@ -140,6 +140,18 @@ export class ConstraintGenerator {
     return perms;
   }
 }
+
+export const determineWinner = (players: Pick<Player, 'role' | 'isAlive'>[]): Faction | null => {
+    const alive = players.filter(p => p.isAlive);
+    const wolves = alive.filter(p => p.role === Role.WEREWOLF).length;
+    const villagers = alive.filter(p => p.role === Role.VILLAGER).length;
+    const gods = alive.filter(p => [Role.SEER, Role.WITCH, Role.HUNTER, Role.GUARD].includes(p.role)).length;
+
+    if (wolves === 0) return Faction.GOOD;
+    if (wolves * 2 >= alive.length) return Faction.BAD;
+    if (villagers === 0 || gods === 0) return Faction.BAD;
+    return null;
+};
 
 // 简单的后处理验证
 export const validateAndFixResponse = (player: Player, state: GameState, response: any): any => {
