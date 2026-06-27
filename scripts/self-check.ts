@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { hashHostToken, verifyHostTokenHash } from '../api/_shared/roomAuth';
 import { getProviderConfig } from '../api/_shared/providerRegistry';
 import { DEFAULT_AI_ROSTER } from '../src/constants';
+import { InformationExtractor } from '../src/services/informationService';
+import { Phase, Role, type GameState } from '../src/types';
 
 const roomId = 'room_abc123';
 const token = 'abcdefghijklmnopqrstuvwxyz123456';
@@ -66,6 +68,41 @@ assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-5.2', 'glm-5.2', 'glm-5.2']
 assert.deepEqual(rosterModelsByProvider.Moonshot, ['kimi-k2.6']);
 assert.deepEqual(rosterModelsByProvider.Aliyun, ['qwen3.7-plus', 'qwen3.7-plus', 'qwen3.7-plus']);
 
+const claimMemoryState = {
+  day: 2,
+  phase: Phase.DAY_DISCUSS,
+  players: [
+    { id: 1, isAlive: true, role: Role.SEER },
+    { id: 2, isAlive: true, role: Role.WITCH },
+  ],
+  logs: [
+    {
+      id: 'claim-1',
+      tick: 1,
+      day: 1,
+      phase: Phase.DAY_SHERIFF_SPEECH,
+      senderId: 1,
+      type: 'SPEECH',
+      content: '我是预言家，昨晚查了3号金水。',
+    },
+    {
+      id: 'claim-2',
+      tick: 2,
+      day: 1,
+      phase: Phase.DAY_DISCUSS,
+      senderId: 2,
+      type: 'SPEECH',
+      content: '我跳女巫，今天先听票型。',
+    },
+  ],
+  sheriffId: 1,
+} as GameState;
+
+assert.match(InformationExtractor.getCompactRoleClaims(claimMemoryState), /1号自称预言家/);
+assert.match(InformationExtractor.getCompactRoleClaims(claimMemoryState), /2号自称女巫/);
+assert.match(InformationExtractor.getPublicMemory(claimMemoryState), /公开身份声明：.*1号自称预言家/);
+assert.doesNotMatch(InformationExtractor.getSituationSummary(claimMemoryState), /狼人\d|好人\d/);
+
 const supabaseSchema = readFileSync('supabase/schema.sql', 'utf8');
 assert.match(supabaseSchema, /grant select on public\.rooms to anon, authenticated;/);
 assert.match(supabaseSchema, /alter publication supabase_realtime add table public\.rooms;/);
@@ -93,6 +130,8 @@ assert.match(aiTurnSource, /fallbackModel/);
 assert.match(aiTurnSource, /deepseek-v4-pro/);
 assert.match(aiTurnSource, /余额不足/);
 assert.match(aiTurnSource, /runWithProviderQueue\(provider/);
+assert.match(aiTurnSource, /getPublicMemory/);
+assert.match(aiTurnSource, /公共结构化记忆/);
 
 const ttsServiceSource = readFileSync('src/services/ttsService.ts', 'utf8');
 assert.doesNotMatch(ttsServiceSource, /postForBlob\("\/api\/tts"/);

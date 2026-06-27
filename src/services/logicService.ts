@@ -143,6 +143,26 @@ export class ConstraintGenerator {
 
 // 简单的后处理验证
 export const validateAndFixResponse = (player: Player, state: GameState, response: any): any => {
+    const normalizeClaimRole = (role: unknown): Role | null => {
+        if (Object.values(Role).includes(role as Role)) return role as Role;
+        if (typeof role !== 'string') return null;
+
+        const normalized = role.trim();
+        if (/预言家|先知|seer/i.test(normalized)) return Role.SEER;
+        if (/女巫|witch/i.test(normalized)) return Role.WITCH;
+        if (/猎人|hunter/i.test(normalized)) return Role.HUNTER;
+        if (/守卫|guard/i.test(normalized)) return Role.GUARD;
+        if (/狼人|wolf|werewolf/i.test(normalized)) return Role.WEREWOLF;
+        if (/平民|村民|villager/i.test(normalized)) return Role.VILLAGER;
+        return null;
+    };
+
+    if (response.claim?.role) {
+        const role = normalizeClaimRole(response.claim.role);
+        if (role) response.claim.role = role;
+        else delete response.claim;
+    }
+
     // 1. 基础修正 (原有的 voteTarget 修正)
     if (response.voteTarget) {
         const targetP = state.players.find(p => p.id === response.voteTarget);

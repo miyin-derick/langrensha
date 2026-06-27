@@ -90,6 +90,7 @@ export const generatePlayerTurn = async (player: Player, gameState: GameState, s
     
     // 2. 👁️ 感知层：获取视野内的最近日志 (From InformationService)
     const visibleLogs = InformationExtractor.getVisibleLogsForPlayer(gameState, player, 10);
+    const publicMemory = InformationExtractor.getPublicMemory(gameState);
     
     // 3. 🔒 物理层：获取合法的行动目标
     const constraints = ConstraintGenerator.generateConstraintsForAI(player, gameState);
@@ -99,7 +100,7 @@ export const generatePlayerTurn = async (player: Player, gameState: GameState, s
     const systemPrompt = `
 # 核心指令
 你正在进行一场真实的狼人杀游戏。你是一个**真人玩家**。
-请扮演 {id}号玩家 ({role})。
+请扮演 ${player.id}号玩家 (${player.role})。
 
 ## 🎭 你的角色设定
 - **名字**: ${getPlayerConfig(player.id).name}
@@ -116,6 +117,9 @@ ${context.doesntKnow.map(k => `❌ ${k}`).join('\n')}
 ## 📜 现场实况 (你最近看到/听到的)
 ${visibleLogs.length > 0 ? visibleLogs.join('\n') : "(暂无最近消息)"}
 
+## 🧾 公共结构化记忆
+${publicMemory}
+
 ## 🎯 当前任务
 指令: ${specificInstruction}
 当前阶段: ${gameState.phase}
@@ -126,13 +130,15 @@ ${visibleLogs.length > 0 ? visibleLogs.join('\n') : "(暂无最近消息)"}
 2. **第一人称**: 必须用“我”来称呼自己。
 3. **内心独白 (thought)**: 诚实地记录你的战术思考（仅观众可见）。
 4. **公开言论 (speech)**: 这是最重要的！不仅面向玩家，也面向看游戏的观众！！这是你对所有人说的话（如果你是狼人，必须在 speech 里伪装，但 thought 要诚实）。
-5. **行动参数**: 必须包含 voteTarget。
-6. **长度限制**: speech 控制在60字以内，thought 控制在40字以内，节奏要像真人短发言。
+5. **公开跳身份 (claim)**: 如果你在 speech 里明确跳身份，填写 claim.role；没跳身份就省略 claim。可选: SEER/WITCH/HUNTER/GUARD/VILLAGER/WEREWOLF。
+6. **行动参数**: 必须包含 voteTarget。
+7. **长度限制**: speech 控制在60字以内，thought 控制在40字以内，节奏要像真人短发言。
 
 JSON 格式示例:
 {
   "speech": "大家听我说，我觉得5号逻辑不通...",
   "thought": "5号踩到我痛脚了，我要把他抗推出去...",
+  "claim": { "role": "SEER" },
   "voteTarget": 5,
   "actionParams": { "useAntidote": false, "poisonTarget": 0 }
 }

@@ -1,6 +1,52 @@
 import { GameState, Player, LogMessage, Role, Phase } from "../types";
 
 export class InformationExtractor {
+  private static readonly roleLabels: Record<Role, string> = {
+    [Role.UNKNOWN]: '未知',
+    [Role.WEREWOLF]: '狼人',
+    [Role.VILLAGER]: '平民',
+    [Role.SEER]: '预言家',
+    [Role.WITCH]: '女巫',
+    [Role.HUNTER]: '猎人',
+    [Role.GUARD]: '守卫'
+  };
+
+  private static normalizeClaimRole(role: unknown): Role | null {
+    if (Object.values(Role).includes(role as Role)) return role as Role;
+    if (typeof role !== 'string') return null;
+
+    const normalized = role.trim();
+    const aliases: Array<[Role, RegExp]> = [
+      [Role.SEER, /预言家|先知|seer/i],
+      [Role.WITCH, /女巫|witch/i],
+      [Role.HUNTER, /猎人|hunter/i],
+      [Role.GUARD, /守卫|guard/i],
+      [Role.WEREWOLF, /狼人|wolf|werewolf/i],
+      [Role.VILLAGER, /平民|村民|villager/i],
+    ];
+
+    return aliases.find(([, pattern]) => pattern.test(normalized))?.[0] ?? null;
+  }
+
+  private static inferRoleClaim(content: string): Role | null {
+    const text = content.replace(/\s+/g, '');
+    const cue = '(我是|我跳|我起跳|我拍|我认|我底牌是|我的身份是|身份是|这张牌是|我这里是|我这张牌是)';
+    const roleAliases: Array<[Role, string]> = [
+      [Role.SEER, '(真)?(预言家|先知)'],
+      [Role.WITCH, '(真)?女巫'],
+      [Role.HUNTER, '(真)?猎人'],
+      [Role.GUARD, '(真)?守卫'],
+      [Role.WEREWOLF, '狼人'],
+      [Role.VILLAGER, '(平民|村民|民牌)'],
+    ];
+
+    for (const [role, alias] of roleAliases) {
+      if (new RegExp(`${cue}${alias}`).test(text)) return role;
+      if (new RegExp(`${alias}(是我|我来跳|我来报|我来拍)`).test(text)) return role;
+    }
+
+    return null;
+  }
   
   // =================================================================
   // 🔥 核心：基于角色和阶段的严格信息过滤
@@ -324,31 +370,45 @@ export class InformationExtractor {
   }
   
   static getCompactRoleClaims(gameState: GameState): string {
-    const claims = new Map<number, string>();
+    const claims = new Map<number, Role>();
     [...gameState.logs].reverse().forEach(l => {
-      if (l.type === 'SPEECH' && l.claim?.role && l.senderId && !claims.has(l.senderId)) {
-        claims.set(l.senderId, l.claim.role);
+      if (l.type !== 'SPEECH' || !l.senderId || claims.has(l.senderId)) return;
+
+      const role = this.normalizeClaimRole(l.claim?.role) ?? this.inferRoleClaim(l.content);
+      if (role) {
+        claims.set(l.senderId, role);
       }
     });
     
     if (claims.size === 0) return "暂无身份声明";
     return Array.from(claims.entries())
-      .map(([id, role]) => `${id}号自称${role}`)
+      .map(([id, role]) => `${id}号自称${this.roleLabels[role]}`)
       .join('、');
   }
   
   static getSituationSummary(gameState: GameState): string {
     const alive = gameState.players.filter(p => p.isAlive);
-    const wolves = alive.filter(p => p.role === Role.WEREWOLF).length;
-    const goods = alive.filter(p => p.role !== Role.WEREWOLF).length;
+    const dead = gameState.players.filter(p => !p.isAlive);
     
-    let summary = `第${gameState.day}天，存活${alive.length}人（狼人${wolves}，好人${goods}）`;
+    let summary = `第${gameState.day}天，当前阶段${gameState.phase}，存活${alive.length}人：${alive.map(p => `${p.id}号`).join('、')}`;
+    if (dead.length > 0) {
+      summary += `；出局：${dead.map(p => `${p.id}号`).join('、')}`;
+    }
     
     if (gameState.sheriffId) {
       summary += `，警长：${gameState.sheriffId}号`;
     }
     
     return summary;
+  }
+
+  static getPublicMemory(gameState: GameState): string {
+    return [
+      `局面摘要：${this.getSituationSummary(gameState)}`,
+      `公开身份声明：${this.getCompactRoleClaims(gameState)}`,
+      `公开票型：${this.getCompactVoteHistory(gameState)}`,
+      '注意：身份声明只代表玩家公开自称，不代表真实身份。'
+    ].join('\n');
   }
   
   // 保持现有方法签名但不实际使用

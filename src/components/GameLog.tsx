@@ -59,12 +59,15 @@ const GameLog = ({ logs, userPlayerId, userRole, showRoles, players }: GameLogPr
 
     // Thoughts
     if (log.type === 'THOUGHT') {
+        const player = players.find(p => p.id === log.senderId);
+        const isSelf = log.senderId === userPlayerId;
+        const label = isSelf ? '我的想法' : `${log.senderId}号 ${player?.name || ''} 心声`;
         containerClass += " items-end";
         bubbleClass += " bg-indigo-950/40 text-indigo-300 italic border border-indigo-900/50 rounded-tr-none";
         return (
             <div key={log.id} className={containerClass}>
                 <div className={`${metaClass} justify-end`}>
-                    <span className="font-bold text-indigo-400">💭 我的想法</span>
+                    <span className="font-bold text-indigo-400">💭 {label}</span>
                 </div>
                 <div className={bubbleClass}>{log.content}</div>
             </div>

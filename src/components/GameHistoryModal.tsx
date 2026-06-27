@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { LogMessage, Player, Role } from '../types';
-import { ROLE_CONFIG } from '../constants';
+import { PROVIDER_CONFIG, ROLE_CONFIG } from '../constants';
 
 interface GameHistoryModalProps {
   logs: LogMessage[];
@@ -172,8 +172,18 @@ const GameHistoryModal: React.FC<GameHistoryModalProps> = ({ logs, players, onCl
                                 </div>
                             );
                         } else if (log.type === 'THOUGHT') {
+                            const player = log.senderId ? getPlayer(log.senderId) : undefined;
+                            const provider = player ? PROVIDER_CONFIG[player.aiProvider] : undefined;
                             icon = '💭';
-                            content = <div className="bg-indigo-950/30 text-indigo-300/80 text-xs italic p-2 rounded border border-indigo-900/30">{log.content}</div>;
+                            content = (
+                                <div className="bg-indigo-950/30 text-indigo-300/80 text-xs italic p-2 rounded border border-indigo-900/30 flex flex-col gap-1">
+                                    <div className="not-italic text-[9px] font-bold opacity-60 flex items-center justify-between gap-2">
+                                        <span>{log.senderId ? `${log.senderId}号 ${player?.name || ''} 心声` : '心声'}</span>
+                                        {provider && <span>{provider.label}</span>}
+                                    </div>
+                                    <div>{log.content}</div>
+                                </div>
+                            );
                         } else if (log.type === 'WOLF_CHANNEL') {
                             icon = '🐺';
                             content = <div className="bg-red-950/30 text-red-400/80 text-xs p-2 rounded border border-red-900/30 flex flex-col"><span className="text-[9px] font-bold opacity-50 mb-0.5">{log.senderId}号 狼人语音</span>{log.content}</div>;
