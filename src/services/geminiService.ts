@@ -12,6 +12,8 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const fallbackModel = 'deepseek-v4-flash';
 const isTransientProviderError = (error: unknown) =>
     error instanceof Error && /1302|1305|速率限制|访问量过大|稍后再试|timed out|Timeout|fetch failed|Failed to fetch/.test(error.message);
+const shouldFallbackImmediately = (error: unknown) =>
+    error instanceof Error && /timed out|Timeout|fetch failed|Failed to fetch/.test(error.message);
 
 const runWithProviderQueue = async <T>(provider: AIProvider, task: () => Promise<T>): Promise<T> => {
     const previous = providerQueues.get(provider) ?? Promise.resolve();
@@ -58,13 +60,16 @@ const executeAIRequest = async (provider: AIProvider, initialModel: string, syst
             { role: "user", content: userContent },
         ],
         temperature,
-        max_tokens: 220,
+        max_tokens: 520,
     });
     const data = await runWithProviderQueue(provider, async () => {
         try {
             return await request(provider, initialModel);
         } catch (error) {
             if (!isTransientProviderError(error)) throw error;
+            if (provider !== 'DeepSeek' && shouldFallbackImmediately(error)) {
+                return runWithProviderQueue('DeepSeek', () => request('DeepSeek', fallbackModel));
+            }
             await delay(4000);
             try {
                 return await request(provider, initialModel);
