@@ -8,6 +8,7 @@ create table if not exists public.rooms (
 );
 
 alter table public.rooms enable row level security;
+grant select on public.rooms to anon, authenticated;
 
 drop policy if exists "rooms are publicly readable" on public.rooms;
 create policy "rooms are publicly readable"

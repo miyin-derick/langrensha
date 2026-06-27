@@ -58,6 +58,10 @@ assert.deepEqual(rosterModelsByProvider.Doubao, ['doubao-seed-2-0-lite-260428', 
 assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-4.7-flash', 'glm-4.7-flash', 'glm-4.7-flash']);
 assert.deepEqual(rosterModelsByProvider.Aliyun, ['qwen-plus', 'qwen-plus', 'qwen-plus']);
 
+const supabaseSchema = readFileSync('supabase/schema.sql', 'utf8');
+assert.match(supabaseSchema, /grant select on public\.rooms to anon, authenticated;/);
+assert.match(supabaseSchema, /alter publication supabase_realtime add table public\.rooms;/);
+
 const collectTsFiles = (dir: string): string[] =>
   readdirSync(dir).flatMap((entry) => {
     const path = join(dir, entry);
