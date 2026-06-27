@@ -58,11 +58,12 @@ const rosterModelsByProvider = DEFAULT_AI_ROSTER.reduce<Record<string, string[]>
   return models;
 }, {});
 
-assert.deepEqual(rosterModelsByProvider.DeepSeek, ['deepseek-v4-flash', 'deepseek-v4-flash', 'deepseek-v4-flash']);
+assert.deepEqual(rosterModelsByProvider.DeepSeek, ['deepseek-v4-pro', 'deepseek-v4-pro', 'deepseek-v4-pro']);
 assert.equal(rosterModelsByProvider.OpenAI, undefined);
 assert.equal(rosterModelsByProvider.Gemini, undefined);
 assert.deepEqual(rosterModelsByProvider.Doubao, ['doubao-seed-2-0-lite-260428', 'doubao-seed-2-0-lite-260428']);
-assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-4.7-flash', 'glm-4.7-flash', 'glm-4.7-flash']);
+assert.deepEqual(rosterModelsByProvider.Zhipu, ['glm-5.2', 'glm-5.2', 'glm-5.2']);
+assert.deepEqual(rosterModelsByProvider.Moonshot, ['kimi-k2.6']);
 assert.deepEqual(rosterModelsByProvider.Aliyun, ['qwen3.7-plus', 'qwen3.7-plus', 'qwen3.7-plus']);
 
 const supabaseSchema = readFileSync('supabase/schema.sql', 'utf8');
@@ -79,15 +80,18 @@ assert.match(aiChatSource, /AbortSignal\.timeout\(25_000\)/);
 assert.match(aiChatSource, /status\(504\)/);
 assert.doesNotMatch(aiChatSource, /enable_thinking\s*=\s*false/);
 assert.doesNotMatch(aiChatSource, /thinking\s*=\s*\{\s*type:\s*'disabled'\s*\}/);
+assert.match(aiChatSource, /temperature: isKimiK26 \? 1 :/);
 
 const aiTurnSource = readFileSync('src/services/geminiService.ts', 'utf8');
-assert.match(aiTurnSource, /max_tokens:\s*520/);
+assert.match(aiTurnSource, /max_tokens:\s*900/);
 assert.match(aiTurnSource, /speech.*60字以内/);
 assert.match(aiTurnSource, /providerQueues/);
 assert.match(aiTurnSource, /providerCooldownMs/);
 assert.match(aiTurnSource, /isTransientProviderError/);
 assert.match(aiTurnSource, /shouldFallbackImmediately/);
 assert.match(aiTurnSource, /fallbackModel/);
+assert.match(aiTurnSource, /deepseek-v4-pro/);
+assert.match(aiTurnSource, /余额不足/);
 assert.match(aiTurnSource, /runWithProviderQueue\(provider/);
 
 const ttsServiceSource = readFileSync('src/services/ttsService.ts', 'utf8');

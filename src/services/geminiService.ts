@@ -9,9 +9,9 @@ const providerQueues = new Map<AIProvider, Promise<void>>();
 const providerReadyAt = new Map<AIProvider, number>();
 const providerCooldownMs: Partial<Record<AIProvider, number>> = { Zhipu: 3500 };
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-const fallbackModel = 'deepseek-v4-flash';
+const fallbackModel = 'deepseek-v4-pro';
 const isTransientProviderError = (error: unknown) =>
-    error instanceof Error && /1302|1305|速率限制|访问量过大|稍后再试|timed out|Timeout|fetch failed|Failed to fetch/.test(error.message);
+    error instanceof Error && /1302|1305|速率限制|访问量过大|余额不足|无可用资源包|稍后再试|timed out|Timeout|fetch failed|Failed to fetch/.test(error.message);
 const shouldFallbackImmediately = (error: unknown) =>
     error instanceof Error && /timed out|Timeout|fetch failed|Failed to fetch/.test(error.message);
 
@@ -60,7 +60,7 @@ const executeAIRequest = async (provider: AIProvider, initialModel: string, syst
             { role: "user", content: userContent },
         ],
         temperature,
-        max_tokens: 520,
+        max_tokens: 900,
     });
     const data = await runWithProviderQueue(provider, async () => {
         try {

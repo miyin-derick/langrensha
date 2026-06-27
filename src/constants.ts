@@ -56,15 +56,15 @@ export interface AIModelSeat {
 
 export const DEFAULT_AI_ROSTER: AIModelSeat[] = [
   { provider: 'Aliyun', model: 'qwen3.7-plus' },
-  { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
+  { provider: 'DeepSeek', model: 'deepseek-v4-pro' },
   { provider: 'Doubao', model: 'doubao-seed-2-0-lite-260428' },
-  { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
-  { provider: 'DeepSeek', model: 'deepseek-v4-flash' },
-  { provider: 'Zhipu', model: 'glm-4.7-flash' },
-  { provider: 'Zhipu', model: 'glm-4.7-flash' },
-  { provider: 'Zhipu', model: 'glm-4.7-flash' },
+  { provider: 'DeepSeek', model: 'deepseek-v4-pro' },
+  { provider: 'DeepSeek', model: 'deepseek-v4-pro' },
+  { provider: 'Zhipu', model: 'glm-5.2' },
+  { provider: 'Zhipu', model: 'glm-5.2' },
+  { provider: 'Zhipu', model: 'glm-5.2' },
   { provider: 'Doubao', model: 'doubao-seed-2-0-lite-260428' },
-  { provider: 'Moonshot', model: 'moonshot-v1-8k' },
+  { provider: 'Moonshot', model: 'kimi-k2.6' },
   { provider: 'Aliyun', model: 'qwen3.7-plus' },
   { provider: 'Aliyun', model: 'qwen3.7-plus' },
 ];
@@ -90,8 +90,8 @@ export const MODEL_CATALOG: Record<string, string[]> = {
   ], 
   Aliyun:   ['qwen3.7-plus', 'qwen-plus', 'qwen-max'],
   Gemini:   ['gemini-3.5-flash'], 
-  Zhipu:    ['glm-4.7-flash', 'glm-4.5-flash'], 
-  Moonshot: ['moonshot-v1-8k'], 
+  Zhipu:    ['glm-5.2', 'glm-4.7-flash', 'glm-4.5-flash'], 
+  Moonshot: ['kimi-k2.6', 'moonshot-v1-8k'], 
   MiniMax:  ['abab6.5s-chat'], 
   Tencent:  ['hunyuan-lite'], 
   Groq:     ['llama3-70b-8192'] 

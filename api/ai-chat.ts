@@ -24,10 +24,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const config = getProviderConfig(body.provider);
+    const model = config.modelOverride || body.model;
+    const isKimiK26 = body.provider === 'Moonshot' && model === 'kimi-k2.6';
     const requestBody: Record<string, unknown> = {
-      model: config.modelOverride || body.model,
+      model,
       messages: body.messages,
-      temperature: body.temperature ?? 0.7,
+      temperature: isKimiK26 ? 1 : body.temperature ?? 0.7,
       max_tokens: body.max_tokens ?? 512,
     };
 
