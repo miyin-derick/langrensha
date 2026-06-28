@@ -4,7 +4,7 @@ import {
   AIResponse 
 } from './types';
 import { 
-  INITIAL_ROLE_DISTRIBUTION, ROLE_CONFIG, PLAYSTYLES, DEFAULT_AI_ROSTER,
+  INITIAL_ROLE_DISTRIBUTION, ROLE_CONFIG, DEFAULT_PLAYSTYLE, DEFAULT_AI_ROSTER,
   getPlayerConfig 
 } from './constants';
 import { generatePlayerTurn } from './services/geminiService';
@@ -56,6 +56,8 @@ const translatePhase = (phase: Phase): string => {
     default: return phase;
   }
 };
+
+const AI_BATCH_SIZE = 12;
 
 async function processWithStagger<T, R>(items: T[], batchSize: number, delay: number, task: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = [];
@@ -117,7 +119,6 @@ const createInitialState = (): GameState => {
     const id = index + 1;
     const config = getPlayerConfig(id);
     const { provider, model } = shuffledModelSeats[index];
-    const style = PLAYSTYLES[Math.floor(Math.random() * PLAYSTYLES.length)];
 
     return {
         id: id,
@@ -126,7 +127,7 @@ const createInitialState = (): GameState => {
         role: role, 
         aiProvider: provider, 
         modelName: model,
-        profile: style, 
+        profile: DEFAULT_PLAYSTYLE,
         isAlive: true, 
         isProtected: false, 
         isPoisoned: false, 
@@ -564,7 +565,7 @@ const App: React.FC = () => {
               if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
               console.log("[WolfPack] 战术已下达:", wolfStrategyContext);
           }
-          const wolfResults = await processWithStagger<Player, { wolf: Player, res: AIResponse }>(wolves, 2, 1000, async (wolf: Player) => {
+          const wolfResults = await processWithStagger<Player, { wolf: Player, res: AIResponse }>(wolves, AI_BATCH_SIZE, 0, async (wolf: Player) => {
                const context = `【夜间行动】\n狼人请指刀。请选择击杀目标。\n\n⚠️【狼队最高指令】\n${wolfStrategyContext}\n\n请参考上述指令行动，确保团队配合！`;
                try {
                    const res = await callAI(wolf, nextState, context);
@@ -702,7 +703,7 @@ const App: React.FC = () => {
           await performSpeech("现在开始警长竞选，想要上警的玩家请举手。");
           const alivePlayers = nextState.players.filter(p => p.isAlive);
           
-          const nomResults = await processWithStagger<Player, { id: number, res: AIResponse }>(alivePlayers, 4, 500, async (p: Player) => {
+          const nomResults = await processWithStagger<Player, { id: number, res: AIResponse }>(alivePlayers, AI_BATCH_SIZE, 0, async (p: Player) => {
               const context = `【警长竞选】\n请决定是否上警。\n竞选(voteTarget=${p.id}) / 放弃(0)。`;
               try { const res = await callAI(p, nextState, context); return { id: p.id, res }; } 
               catch (e) { return { id: p.id, res: { voteTarget: 0 } as any }; }
@@ -876,7 +877,7 @@ const App: React.FC = () => {
           const candidates = isPK ? nextState.pkCandidates : nextState.sheriffCandidates;
           await performSpeech(isPK ? "请进行警长PK投票。" : "请投选警长。");
           const eligibleVoters = nextState.players.filter(p => p.isAlive && !candidates.includes(p.id));
-          const votes = await processWithStagger<Player, { voterId: number, target: number, thought?: string }>(eligibleVoters, 4, 500, async (voter) => {
+          const votes = await processWithStagger<Player, { voterId: number, target: number, thought?: string }>(eligibleVoters, AI_BATCH_SIZE, 0, async (voter) => {
               const res = await callAI(voter, nextState, `【投票阶段】\n请投票给候选人: [${candidates.join(', ')}] 或弃票(0)。`);
               return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
           });
@@ -920,7 +921,7 @@ const App: React.FC = () => {
             const dayCandidates = isDayPK ? nextState.pkCandidates : nextState.players.filter(p => p.isAlive).map(p => p.id);
             await performSpeech(isDayPK ? "请进行PK投票。" : "请投票放逐。");
             const dayVoters = nextState.players.filter(p => p.isAlive && (!isDayPK || !dayCandidates.includes(p.id)));
-            const dayVotes = await processWithStagger<Player, { voterId: number, target: number, thought?: string }>(dayVoters, 4, 500, async (voter) => {
+            const dayVotes = await processWithStagger<Player, { voterId: number, target: number, thought?: string }>(dayVoters, AI_BATCH_SIZE, 0, async (voter) => {
                 const res = await callAI(voter, nextState, `【投票阶段】\n请投票放逐: [${dayCandidates.join(', ')}] 或弃票(0)。`);
                 return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
             });

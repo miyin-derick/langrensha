@@ -104,9 +104,7 @@ export const generatePlayerTurn = async (player: Player, gameState: GameState, s
 
 ## 🎭 你的角色设定
 - **名字**: ${getPlayerConfig(player.id).name}
-- **当前心态**: ${context.mindset}
-- **发言风格**: ${context.speechStyle}
-- **当前目标**: ${context.goals.join(", ")}
+- **发挥原则**: 不预设固定性格。请根据你的模型能力、角色身份、公开局势和当前任务自然发挥。
 
 ## 🧠 你的记忆库 (已知事实)
 ${context.knows.map(k => `✅ ${k}`).join('\n')}

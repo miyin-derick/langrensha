@@ -188,6 +188,7 @@ assert.match(aiChatSource, /temperature: isKimiK26 \? 1 :/);
 const aiTurnSource = readFileSync('src/services/geminiService.ts', 'utf8');
 assert.match(aiTurnSource, /max_tokens:\s*900/);
 assert.match(aiTurnSource, /speech.*60字以内/);
+assert.doesNotMatch(aiTurnSource, /当前心态|发言风格|当前目标/);
 assert.match(aiTurnSource, /providerQueues/);
 assert.match(aiTurnSource, /providerCooldownMs/);
 assert.match(aiTurnSource, /isTransientProviderError/);
@@ -199,6 +200,25 @@ assert.match(aiTurnSource, /runWithProviderQueue\(provider/);
 assert.match(aiTurnSource, /getPublicMemory/);
 assert.match(aiTurnSource, /公共结构化记忆与局势感知/);
 assert.match(aiTurnSource, /不要忽略已经公开跳身份或报查验的玩家/);
+
+const appSource = readFileSync('src/App.tsx', 'utf8');
+assert.match(appSource, /AI_BATCH_SIZE\s*=\s*12/);
+assert.doesNotMatch(appSource, /processWithStagger<[^>]+>\([^,\n]+,\s*[24],/);
+assert.doesNotMatch(appSource, /PLAYSTYLES\[|Math\.random\(\) \* PLAYSTYLES\.length/);
+assert.match(appSource, /profile:\s*DEFAULT_PLAYSTYLE/);
+
+const constantsSource = readFileSync('src/constants.ts', 'utf8');
+assert.doesNotMatch(constantsSource, /PLAYSTYLES/);
+assert.doesNotMatch(constantsSource, /personality/);
+assert.doesNotMatch(constantsSource, /理智哥|小甜心|暴躁大叔|高冷御姐|乐子人|温柔阿姨|逻辑帝|胆小妹|冲动男|深沉男|焦虑女/);
+assert.doesNotMatch(constantsSource, /逻辑缜密|绿茶性格|脾气火爆|话少高傲|阴阳怪气|知心大姐姐|严谨论文风|谨慎|直肠子|城府深|神经质/);
+
+const decisionEngineSource = readFileSync('src/services/decisionEngine.ts', 'utf8');
+assert.doesNotMatch(decisionEngineSource, /getSpeechStyle|config\.personality|性格描述/);
+assert.doesNotMatch(decisionEngineSource, /mindset|speechStyle|goals/);
+
+const typesSource = readFileSync('src/types.ts', 'utf8');
+assert.doesNotMatch(typesSource, /mindset|speechStyle|goals|心理模型|说话风格/);
 
 const ttsServiceSource = readFileSync('src/services/ttsService.ts', 'utf8');
 assert.doesNotMatch(ttsServiceSource, /postForBlob\("\/api\/tts"/);

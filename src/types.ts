@@ -269,18 +269,10 @@ export interface AIResponse {
 }
 
 export interface DecisionContext {
-  // 基础身份
   playerId: number;
   role: Role;
   phase: string;
   isAlive: boolean;
-  
-  // 认知边界 (Cognitive Boundaries)
-  knows: string[];       // 确定的事实 (我知道我是狼)
-  doesntKnow: string[];  // 确定的未知 (我不知道谁是女巫)
-  
-  // 心理模型 (Mental Model)
-  mindset: string;       // 当前的心理活动 (如：我要假装好人)
-  speechStyle: string;   // 说话风格 (如：暴躁、阴阳怪气)
-  goals: string[];       // 当前行动目标 (如：抗推预言家)
+  knows: string[];
+  doesntKnow: string[];
 }
