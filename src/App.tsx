@@ -379,6 +379,16 @@ const App: React.FC = () => {
       }
   };
 
+  const getSafeVoteChoice = async (voter: Player, state: GameState, context: string) => {
+      try {
+          const res = await callAI(voter, state, context);
+          return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
+      } catch (error) {
+          console.warn(`[Vote] ${voter.id}号投票失败，按弃票处理`, error);
+          return { voterId: voter.id, target: 0, thought: "投票失败，弃票" };
+      }
+  };
+
   const startFastTrack = (player: Player, state: GameState, context: string) => {
       const task = (async () => {
           try {
@@ -878,8 +888,7 @@ const App: React.FC = () => {
           await performSpeech(isPK ? "请进行警长PK投票。" : "请投选警长。");
           const eligibleVoters = nextState.players.filter(p => p.isAlive && !candidates.includes(p.id));
           const votes = await processWithStagger<Player, { voterId: number, target: number, thought?: string }>(eligibleVoters, AI_BATCH_SIZE, 0, async (voter) => {
-              const res = await callAI(voter, nextState, `【投票阶段】\n请投票给候选人: [${candidates.join(', ')}] 或弃票(0)。`);
-              return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
+              return getSafeVoteChoice(voter, nextState, `【投票阶段】\n请投票给候选人: [${candidates.join(', ')}] 或弃票(0)。`);
           });
 
           if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
@@ -922,8 +931,7 @@ const App: React.FC = () => {
             await performSpeech(isDayPK ? "请进行PK投票。" : "请投票放逐。");
             const dayVoters = nextState.players.filter(p => p.isAlive && (!isDayPK || !dayCandidates.includes(p.id)));
             const dayVotes = await processWithStagger<Player, { voterId: number, target: number, thought?: string }>(dayVoters, AI_BATCH_SIZE, 0, async (voter) => {
-                const res = await callAI(voter, nextState, `【投票阶段】\n请投票放逐: [${dayCandidates.join(', ')}] 或弃票(0)。`);
-                return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
+                return getSafeVoteChoice(voter, nextState, `【投票阶段】\n请投票放逐: [${dayCandidates.join(', ')}] 或弃票(0)。`);
             });
 
             if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }

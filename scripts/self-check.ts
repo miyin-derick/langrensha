@@ -206,6 +206,9 @@ assert.match(appSource, /AI_BATCH_SIZE\s*=\s*12/);
 assert.doesNotMatch(appSource, /processWithStagger<[^>]+>\([^,\n]+,\s*[24],/);
 assert.doesNotMatch(appSource, /PLAYSTYLES\[|Math\.random\(\) \* PLAYSTYLES\.length/);
 assert.match(appSource, /profile:\s*DEFAULT_PLAYSTYLE/);
+assert.match(appSource, /getSafeVoteChoice/);
+assert.match(appSource, /投票失败，按弃票处理/);
+assert.equal(appSource.match(/getSafeVoteChoice\(/g)?.length ?? 0, 2);
 
 const constantsSource = readFileSync('src/constants.ts', 'utf8');
 assert.doesNotMatch(constantsSource, /PLAYSTYLES/);
