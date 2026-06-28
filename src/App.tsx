@@ -343,9 +343,10 @@ const App: React.FC = () => {
 
   const addLog = (state: GameState, type: LogMessage['type'], content: string, senderId?: number, claim?: PlayerClaim, metadata?: SpeechMetadata): GameState => {
     const newTick = (state.globalTick || 0) + 1;
+    const safeContent = typeof content === 'string' ? content : '...';
     const newLog: LogMessage = {
       id: Math.random().toString(36).substr(2, 9), 
-      tick: newTick, day: state.day, phase: state.phase, senderId, type, content, claim, metadata
+      tick: newTick, day: state.day, phase: state.phase, senderId, type, content: safeContent, claim, metadata
     };
     return { ...state, logs: [...state.logs, newLog], globalTick: newTick };
   };

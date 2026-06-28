@@ -155,6 +155,13 @@ export const determineWinner = (players: Pick<Player, 'role' | 'isAlive'>[]): Fa
 
 // 简单的后处理验证
 export const validateAndFixResponse = (player: Player, state: GameState, response: any): any => {
+    if (!response || typeof response !== 'object') {
+        response = {};
+    }
+    response.speech = typeof response.speech === 'string' && response.speech.trim() ? response.speech : '...';
+    response.thought = typeof response.thought === 'string' ? response.thought : '';
+    response.voteTarget = Number.isFinite(Number(response.voteTarget)) ? Number(response.voteTarget) : 0;
+
     const normalizeClaimRole = (role: unknown): Role | null => {
         if (Object.values(Role).includes(role as Role)) return role as Role;
         if (typeof role !== 'string') return null;

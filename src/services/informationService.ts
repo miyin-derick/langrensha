@@ -52,7 +52,12 @@ export class InformationExtractor {
     if (!items.includes(item)) items.push(item);
   }
 
-  private static extractMentionedPlayer(content: string, patterns: RegExp[]): number | null {
+  private static getLogContent(log: Pick<LogMessage, 'content'>): string {
+    return typeof log.content === 'string' ? log.content : '';
+  }
+
+  private static extractMentionedPlayer(content: unknown, patterns: RegExp[]): number | null {
+    if (typeof content !== 'string') return null;
     const text = content.replace(/\s+/g, '');
     for (const pattern of patterns) {
       const match = text.match(pattern);
@@ -63,7 +68,9 @@ export class InformationExtractor {
 
   private static extractPublicCheck(log: LogMessage): string | null {
     if (log.type !== 'SPEECH' || !log.senderId) return null;
-    const text = log.content.replace(/\s+/g, '');
+    const content = this.getLogContent(log);
+    if (!content) return null;
+    const text = content.replace(/\s+/g, '');
     const checkMatch =
       text.match(/查(?:验|了|到)?(\d+)号?(金水|银水|好人|查杀|狼人|坏人)/) ||
       text.match(/(\d+)号?(金水|银水|好人|查杀|狼人|坏人)/);
@@ -88,7 +95,7 @@ export class InformationExtractor {
     gameState.logs
       .filter(log => log.type === 'ACTION_VOTE' && log.phase === latestVotePhase && log.senderId)
       .forEach(log => {
-        const target = log.content.match(/-> (\d+)号/)?.[1] ?? '弃票';
+        const target = this.getLogContent(log).match(/-> (\d+)号/)?.[1] ?? '弃票';
         voteGroups.set(target, [...(voteGroups.get(target) || []), log.senderId!]);
       });
 
@@ -147,7 +154,7 @@ export class InformationExtractor {
     // 📢 系统公告：根据阶段决定
     if (log.type === 'SYSTEM') {
       // 系统公告的内容也要过滤
-      const content = log.content;
+      const content = this.getLogContent(log);
       
       // 警长竞选阶段：隐藏所有夜间结果信息
       if (this.isSheriffPhase(currentPhase)) {
@@ -222,7 +229,7 @@ export class InformationExtractor {
         
         // 移除包含夜间信息的系统公告
         if (log.type === 'SYSTEM') {
-          const content = log.content;
+          const content = this.getLogContent(log);
           if (content.includes('第') && content.includes('夜')) return false;
           if (content.includes('倒牌')) return false;
           if (content.includes('死亡')) return false;
@@ -258,52 +265,53 @@ export class InformationExtractor {
    */
   private static formatLog(log: LogMessage, viewer: Player): string {
     const isSelf = log.senderId === viewer.id;
+    const content = this.getLogContent(log);
     
     switch(log.type) {
       case 'SYSTEM':
-        return `📢 ${log.content}`;
+        return `📢 ${content}`;
         
       case 'SPEECH':
         const speaker = isSelf ? "我" : `${log.senderId}号`;
         const roleClaim = log.claim?.role ? `(自称${log.claim.role})` : "";
-        return `${speaker}${roleClaim}说：${log.content}`;
+        return `${speaker}${roleClaim}说：${content || '...'}`;
         
       case 'THOUGHT':
-        return isSelf ? `💭 ${log.content}` : '';
+        return isSelf ? `💭 ${content}` : '';
         
       case 'WOLF_CHANNEL':
-        return `🐺${isSelf ? '我' : log.senderId + '号'}：${log.content}`;
+        return `🐺${isSelf ? '我' : log.senderId + '号'}：${content}`;
         
       case 'ACTION_CHECK':
-        return `🔮 我${log.content}`;
+        return `🔮 我${content}`;
         
       case 'ACTION_SAVE':
-        return `🛡️ 我${log.content}`;
+        return `🛡️ 我${content}`;
         
       case 'ACTION_KILL':
         if (viewer.role === Role.WEREWOLF) {
-          return `🔪 狼队${log.content}`;
+          return `🔪 狼队${content}`;
         }
-        return isSelf ? `🔪 我${log.content}` : '';
+        return isSelf ? `🔪 我${content}` : '';
         
       case 'ACTION_VOTE':
-        const match = log.content.match(/-> (\d+)号/);
+        const match = content.match(/-> (\d+)号/);
         if (match) {
           return `🗳️ ${log.senderId}号投给了${match[1]}号`;
         }
         return `🗳️ ${log.senderId}号弃票`;
         
       case 'DEATH':
-        return `💀 ${log.content}`;
+        return `💀 ${content}`;
         
       case 'VOTE':
-        return `📊 ${log.content}`;
+        return `📊 ${content}`;
         
       case 'SHERIFF':
-        return `👑 ${log.content}`;
+        return `👑 ${content}`;
         
       default:
-        return log.content;
+        return content;
     }
   }
 
@@ -409,10 +417,11 @@ export class InformationExtractor {
     const votes: string[] = [];
     gameState.logs.forEach(log => {
       if (log.type === 'ACTION_VOTE') {
-        const match = log.content.match(/-> (\d+)号/);
+        const content = this.getLogContent(log);
+        const match = content.match(/-> (\d+)号/);
         if (match && log.senderId) {
           votes.push(`${log.senderId}→${match[1]}`);
-        } else if (log.content.includes('弃票') && log.senderId) {
+        } else if (content.includes('弃票') && log.senderId) {
           votes.push(`${log.senderId}→弃票`);
         }
       }
@@ -435,7 +444,8 @@ export class InformationExtractor {
         const publicCheck = this.extractPublicCheck(log);
         if (publicCheck) this.addUnique(seerLines, publicCheck);
 
-        const attackedId = this.extractMentionedPlayer(log.content, [
+        const content = this.getLogContent(log);
+        const attackedId = this.extractMentionedPlayer(content, [
           /(?:怀疑|踩|打|出|抗推|票|投|锤|归|裸打)(\d+)号/,
           /(\d+)号(?:有问题|像狼|不做好|该出|抗推|狼面|匪面)/,
         ]);
@@ -444,7 +454,7 @@ export class InformationExtractor {
           scoreFocus(attackedId, 2);
         }
 
-        const supportedId = this.extractMentionedPlayer(log.content, [
+        const supportedId = this.extractMentionedPlayer(content, [
           /(?:站边|认|信|跟|保)(\d+)号/,
           /(\d+)号(?:可信|做好|像好人|是真预言家|是真神)/,
         ]);
@@ -454,7 +464,7 @@ export class InformationExtractor {
       }
 
       if (log.type === 'ACTION_VOTE') {
-        const targetId = Number(log.content.match(/-> (\d+)号/)?.[1] || 0);
+        const targetId = Number(this.getLogContent(log).match(/-> (\d+)号/)?.[1] || 0);
         if (targetId) scoreFocus(targetId, 1);
       }
     });
@@ -478,7 +488,7 @@ export class InformationExtractor {
     [...gameState.logs].reverse().forEach(l => {
       if (l.type !== 'SPEECH' || !l.senderId || claims.has(l.senderId)) return;
 
-      const role = this.normalizeClaimRole(l.claim?.role) ?? this.inferRoleClaim(l.content);
+      const role = this.normalizeClaimRole(l.claim?.role) ?? this.inferRoleClaim(this.getLogContent(l));
       if (role) {
         claims.set(l.senderId, role);
       }

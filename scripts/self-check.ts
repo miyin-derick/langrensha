@@ -5,7 +5,7 @@ import { hashHostToken, verifyHostTokenHash } from '../api/_shared/roomAuth';
 import { getProviderConfig } from '../api/_shared/providerRegistry';
 import { DEFAULT_AI_ROSTER } from '../src/constants';
 import { InformationExtractor } from '../src/services/informationService';
-import { determineWinner } from '../src/services/logicService';
+import { determineWinner, validateAndFixResponse } from '../src/services/logicService';
 import { Faction, Phase, Role, type GameState, type Player } from '../src/types';
 
 const roomId = 'room_abc123';
@@ -138,6 +138,32 @@ assert.match(InformationExtractor.getSituationAwarenessSummary(claimMemoryState)
 assert.match(InformationExtractor.getSituationAwarenessSummary(claimMemoryState), /怀疑攻击：.*4号→3号/);
 assert.match(InformationExtractor.getPublicMemory(claimMemoryState), /局势感知：/);
 assert.doesNotMatch(InformationExtractor.getPublicMemory(claimMemoryState), /3号.*狼人/);
+
+const malformedLogState = {
+  ...claimMemoryState,
+  logs: [
+    ...claimMemoryState.logs,
+    {
+      id: 'missing-content',
+      tick: 6,
+      day: 1,
+      phase: Phase.DAY_SHERIFF_SPEECH,
+      senderId: 3,
+      type: 'SPEECH',
+    },
+  ],
+} as GameState;
+
+assert.doesNotThrow(() => InformationExtractor.getPublicMemory(malformedLogState));
+
+assert.deepEqual(
+  validateAndFixResponse(
+    { id: 1, role: Role.VILLAGER } as Player,
+    claimMemoryState,
+    { voteTarget: 2 },
+  ),
+  { speech: '...', thought: '', voteTarget: 2 },
+);
 
 const playerForVictory = (id: number, role: Role, isAlive = true) => ({ id, role, isAlive }) as Player;
 
