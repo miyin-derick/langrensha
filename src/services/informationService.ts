@@ -47,6 +47,57 @@ export class InformationExtractor {
 
     return null;
   }
+
+  private static addUnique(items: string[], item: string) {
+    if (!items.includes(item)) items.push(item);
+  }
+
+  private static extractMentionedPlayer(content: string, patterns: RegExp[]): number | null {
+    const text = content.replace(/\s+/g, '');
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match?.[1]) return Number(match[1]);
+    }
+    return null;
+  }
+
+  private static extractPublicCheck(log: LogMessage): string | null {
+    if (log.type !== 'SPEECH' || !log.senderId) return null;
+    const text = log.content.replace(/\s+/g, '');
+    const checkMatch =
+      text.match(/查(?:验|了|到)?(\d+)号?(金水|银水|好人|查杀|狼人|坏人)/) ||
+      text.match(/(\d+)号?(金水|银水|好人|查杀|狼人|坏人)/);
+
+    if (!checkMatch) return null;
+
+    const targetId = Number(checkMatch[1]);
+    const result = checkMatch[2].includes('杀') || checkMatch[2].includes('狼') || checkMatch[2].includes('坏')
+      ? '查杀'
+      : '金水';
+    return `${log.senderId}号报${targetId}号${result}`;
+  }
+
+  private static getLatestVoteTally(gameState: GameState): string {
+    const latestVotePhase = [...gameState.logs]
+      .reverse()
+      .find(log => log.type === 'ACTION_VOTE')?.phase;
+
+    if (!latestVotePhase) return '暂无公开票型';
+
+    const voteGroups = new Map<string, number[]>();
+    gameState.logs
+      .filter(log => log.type === 'ACTION_VOTE' && log.phase === latestVotePhase && log.senderId)
+      .forEach(log => {
+        const target = log.content.match(/-> (\d+)号/)?.[1] ?? '弃票';
+        voteGroups.set(target, [...(voteGroups.get(target) || []), log.senderId!]);
+      });
+
+    if (voteGroups.size === 0) return '暂无公开票型';
+
+    return Array.from(voteGroups.entries())
+      .map(([target, voters]) => `${voters.join('、')}号→${target === '弃票' ? '弃票' : `${target}号`}`)
+      .join('；');
+  }
   
   // =================================================================
   // 🔥 核心：基于角色和阶段的严格信息过滤
@@ -368,6 +419,59 @@ export class InformationExtractor {
     });
     return votes.length > 0 ? `投票记录：${votes.join('、')}` : '暂无投票记录';
   }
+
+  static getSituationAwarenessSummary(gameState: GameState): string {
+    const seerLines: string[] = [];
+    const supports: string[] = [];
+    const attacks: string[] = [];
+    const focusScores = new Map<number, number>();
+
+    const scoreFocus = (id: number, score: number) => {
+      focusScores.set(id, (focusScores.get(id) || 0) + score);
+    };
+
+    gameState.logs.forEach(log => {
+      if (log.type === 'SPEECH' && log.senderId) {
+        const publicCheck = this.extractPublicCheck(log);
+        if (publicCheck) this.addUnique(seerLines, publicCheck);
+
+        const attackedId = this.extractMentionedPlayer(log.content, [
+          /(?:怀疑|踩|打|出|抗推|票|投|锤|归|裸打)(\d+)号/,
+          /(\d+)号(?:有问题|像狼|不做好|该出|抗推|狼面|匪面)/,
+        ]);
+        if (attackedId && attackedId !== log.senderId) {
+          this.addUnique(attacks, `${log.senderId}号→${attackedId}号`);
+          scoreFocus(attackedId, 2);
+        }
+
+        const supportedId = this.extractMentionedPlayer(log.content, [
+          /(?:站边|认|信|跟|保)(\d+)号/,
+          /(\d+)号(?:可信|做好|像好人|是真预言家|是真神)/,
+        ]);
+        if (supportedId && supportedId !== log.senderId) {
+          this.addUnique(supports, `${log.senderId}号→${supportedId}号`);
+        }
+      }
+
+      if (log.type === 'ACTION_VOTE') {
+        const targetId = Number(log.content.match(/-> (\d+)号/)?.[1] || 0);
+        if (targetId) scoreFocus(targetId, 1);
+      }
+    });
+
+    const focus = Array.from(focusScores.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([id]) => `${id}号`);
+
+    return [
+      `预言家线：${seerLines.slice(-4).join('、') || '暂无明确预言家线'}`,
+      `局势焦点：${focus.join('、') || '暂无明显焦点'}`,
+      `站边关系：${supports.slice(-6).join('、') || '暂无明确站边'}`,
+      `怀疑攻击：${attacks.slice(-6).join('、') || '暂无明确攻击'}`,
+      `最新票型：${this.getLatestVoteTally(gameState)}`,
+    ].join('\n');
+  }
   
   static getCompactRoleClaims(gameState: GameState): string {
     const claims = new Map<number, Role>();
@@ -407,6 +511,7 @@ export class InformationExtractor {
       `局面摘要：${this.getSituationSummary(gameState)}`,
       `公开身份声明：${this.getCompactRoleClaims(gameState)}`,
       `公开票型：${this.getCompactVoteHistory(gameState)}`,
+      `局势感知：\n${this.getSituationAwarenessSummary(gameState)}`,
       '注意：身份声明只代表玩家公开自称，不代表真实身份。'
     ].join('\n');
   }

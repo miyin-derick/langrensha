@@ -75,6 +75,8 @@ const claimMemoryState = {
   players: [
     { id: 1, isAlive: true, role: Role.SEER },
     { id: 2, isAlive: true, role: Role.WITCH },
+    { id: 3, isAlive: true, role: Role.WEREWOLF },
+    { id: 4, isAlive: true, role: Role.VILLAGER },
   ],
   logs: [
     {
@@ -87,13 +89,40 @@ const claimMemoryState = {
       content: '我是预言家，昨晚查了3号金水。',
     },
     {
-      id: 'claim-2',
+      id: 'claim-accuse',
       tick: 2,
+      day: 1,
+      phase: Phase.DAY_SHERIFF_SPEECH,
+      senderId: 4,
+      type: 'SPEECH',
+      content: '我怀疑3号，先站边1号预言家。',
+    },
+    {
+      id: 'claim-2',
+      tick: 3,
       day: 1,
       phase: Phase.DAY_DISCUSS,
       senderId: 2,
       type: 'SPEECH',
       content: '我跳女巫，今天先听票型。',
+    },
+    {
+      id: 'vote-1',
+      tick: 4,
+      day: 1,
+      phase: Phase.DAY_VOTE,
+      senderId: 1,
+      type: 'ACTION_VOTE',
+      content: '1号 投票给了 -> 3号',
+    },
+    {
+      id: 'vote-4',
+      tick: 5,
+      day: 1,
+      phase: Phase.DAY_VOTE,
+      senderId: 4,
+      type: 'ACTION_VOTE',
+      content: '4号 投票给了 -> 3号',
     },
   ],
   sheriffId: 1,
@@ -103,6 +132,12 @@ assert.match(InformationExtractor.getCompactRoleClaims(claimMemoryState), /1号�
 assert.match(InformationExtractor.getCompactRoleClaims(claimMemoryState), /2号自称女巫/);
 assert.match(InformationExtractor.getPublicMemory(claimMemoryState), /公开身份声明：.*1号自称预言家/);
 assert.doesNotMatch(InformationExtractor.getSituationSummary(claimMemoryState), /狼人\d|好人\d/);
+assert.match(InformationExtractor.getSituationAwarenessSummary(claimMemoryState), /预言家线：.*1号报3号金水/);
+assert.match(InformationExtractor.getSituationAwarenessSummary(claimMemoryState), /局势焦点：.*3号/);
+assert.match(InformationExtractor.getSituationAwarenessSummary(claimMemoryState), /站边关系：.*4号→1号/);
+assert.match(InformationExtractor.getSituationAwarenessSummary(claimMemoryState), /怀疑攻击：.*4号→3号/);
+assert.match(InformationExtractor.getPublicMemory(claimMemoryState), /局势感知：/);
+assert.doesNotMatch(InformationExtractor.getPublicMemory(claimMemoryState), /3号.*狼人/);
 
 const playerForVictory = (id: number, role: Role, isAlive = true) => ({ id, role, isAlive }) as Player;
 
@@ -162,7 +197,8 @@ assert.match(aiTurnSource, /deepseek-v4-pro/);
 assert.match(aiTurnSource, /余额不足/);
 assert.match(aiTurnSource, /runWithProviderQueue\(provider/);
 assert.match(aiTurnSource, /getPublicMemory/);
-assert.match(aiTurnSource, /公共结构化记忆/);
+assert.match(aiTurnSource, /公共结构化记忆与局势感知/);
+assert.match(aiTurnSource, /不要忽略已经公开跳身份或报查验的玩家/);
 
 const ttsServiceSource = readFileSync('src/services/ttsService.ts', 'utf8');
 assert.doesNotMatch(ttsServiceSource, /postForBlob\("\/api\/tts"/);

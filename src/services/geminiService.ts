@@ -117,8 +117,9 @@ ${context.doesntKnow.map(k => `❌ ${k}`).join('\n')}
 ## 📜 现场实况 (你最近看到/听到的)
 ${visibleLogs.length > 0 ? visibleLogs.join('\n') : "(暂无最近消息)"}
 
-## 🧾 公共结构化记忆
+## 🧾 公共结构化记忆与局势感知
 ${publicMemory}
+请优先参考这里的公开身份声明、预言家线、站边关系、怀疑攻击和票型来判断局势。不要忽略已经公开跳身份或报查验的玩家。
 
 ## 🎯 当前任务
 指令: ${specificInstruction}
