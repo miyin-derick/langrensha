@@ -29,13 +29,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const requestBody: Record<string, unknown> = {
       model,
       messages: body.messages,
-      temperature: isKimiK26 ? 1 : body.temperature ?? 0.7,
-      max_tokens: body.max_tokens ?? 512,
     };
+    if (!isKimiK26) {
+      requestBody.temperature = body.temperature ?? 0.7;
+      requestBody.max_tokens = body.max_tokens ?? 512;
+    }
+    const timeoutMs = isKimiK26 ? 60_000 : 25_000;
 
     const response = await fetch(config.endpoint, {
       method: 'POST',
-      signal: AbortSignal.timeout(25_000),
+      signal: AbortSignal.timeout(timeoutMs),
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         'Content-Type': 'application/json',

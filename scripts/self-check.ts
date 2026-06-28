@@ -179,11 +179,13 @@ assert.deepEqual(vercelConfig.rewrites, [
 ]);
 
 const aiChatSource = readFileSync('api/ai-chat.ts', 'utf8');
-assert.match(aiChatSource, /AbortSignal\.timeout\(25_000\)/);
+assert.match(aiChatSource, /const timeoutMs = isKimiK26 \? 60_000 : 25_000;/);
+assert.match(aiChatSource, /AbortSignal\.timeout\(timeoutMs\)/);
 assert.match(aiChatSource, /status\(504\)/);
 assert.doesNotMatch(aiChatSource, /enable_thinking\s*=\s*false/);
 assert.doesNotMatch(aiChatSource, /thinking\s*=\s*\{\s*type:\s*'disabled'\s*\}/);
-assert.match(aiChatSource, /temperature: isKimiK26 \? 1 :/);
+assert.match(aiChatSource, /if \(!isKimiK26\)/);
+assert.doesNotMatch(aiChatSource, /temperature:\s*isKimiK26/);
 
 const aiTurnSource = readFileSync('src/services/geminiService.ts', 'utf8');
 assert.match(aiTurnSource, /max_tokens:\s*900/);
@@ -209,6 +211,9 @@ assert.match(appSource, /profile:\s*DEFAULT_PLAYSTYLE/);
 assert.match(appSource, /getSafeVoteChoice/);
 assert.match(appSource, /投票失败，按弃票处理/);
 assert.equal(appSource.match(/getSafeVoteChoice\(/g)?.length ?? 0, 2);
+assert.match(appSource, /getSafeAIResponse/);
+assert.match(appSource, /模型调用失败，按空过处理/);
+assert.equal(appSource.match(/await callAI\(/g)?.length ?? 0, 1);
 
 const constantsSource = readFileSync('src/constants.ts', 'utf8');
 assert.doesNotMatch(constantsSource, /PLAYSTYLES/);

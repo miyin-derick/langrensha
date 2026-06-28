@@ -379,28 +379,40 @@ const App: React.FC = () => {
       }
   };
 
-  const getSafeVoteChoice = async (voter: Player, state: GameState, context: string) => {
+  const getSafeAIResponse = async (player: Player, state: GameState, context: string, label: string): Promise<AIResponse> => {
       try {
-          const res = await callAI(voter, state, context);
-          return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
+          return await callAI(player, state, context);
       } catch (error) {
-          console.warn(`[Vote] ${voter.id}号投票失败，按弃票处理`, error);
+          console.warn(`[AI] ${player.id}号${label}模型调用失败，按空过处理`, error);
+          return {
+              speech: "...",
+              thought: "模型调用失败，按空过处理",
+              voteTarget: 0,
+          };
+      }
+  };
+
+  const getSafeVoteChoice = async (voter: Player, state: GameState, context: string) => {
+      const res = await getSafeAIResponse(voter, state, context, "投票");
+      if ((res.voteTarget || 0) === 0 && res.thought === "模型调用失败，按空过处理") {
+          console.warn(`[Vote] ${voter.id}号投票失败，按弃票处理`);
           return { voterId: voter.id, target: 0, thought: "投票失败，弃票" };
       }
+      return { voterId: voter.id, target: res.voteTarget || 0, thought: res.thought };
   };
 
   const startFastTrack = (player: Player, state: GameState, context: string) => {
       const task = (async () => {
-          try {
-              const res = await callAI(player, state, context);
-              let audioUrl = null;
-              if (enableTTSRef.current && res.speech && res.speech.trim() !== '' && res.speech !== '...') {
+          const res = await getSafeAIResponse(player, state, context, "预生成发言");
+          let audioUrl = null;
+          if (enableTTSRef.current && res.speech && res.speech.trim() !== '' && res.speech !== '...') {
+              try {
                   audioUrl = await prefetch(res.speech, player.id);
+              } catch (error) {
+                  console.warn(`[TTS] ${player.id}号预取失败，继续文本发言`, error);
               }
-              return { res, audioUrl };
-          } catch (e) {
-              return { res: { speech: "...", thought: "Error", voteTarget: 0 } as AIResponse }; 
           }
+          return { res, audioUrl };
       })();
       nextTurnTaskRef.current = { id: player.id, task };
   };
@@ -432,7 +444,7 @@ const App: React.FC = () => {
             if (currentSessionId !== gameSessionIdRef.current) return state;
 
             const context = `【移交警徽】\n你已死亡。请决定警徽流向。\n规则: 移交(voteTarget=ID) 或 撕毁(0)。`;
-            const res = await callAI(sheriffPlayer, state, context);
+            const res = await getSafeAIResponse(sheriffPlayer, state, context, "移交警徽");
             
             if (currentSessionId !== gameSessionIdRef.current) return state;
 
@@ -480,7 +492,7 @@ const App: React.FC = () => {
             if (currentSessionId !== gameSessionIdRef.current) return { state: currentState, killedId: null };
 
             const context = `【发动技能】\n你已死亡。作为猎人，请带走一人(voteTarget)。`;
-            const res = await callAI(player, state, context);
+            const res = await getSafeAIResponse(player, state, context, "猎人技能");
 
             if (currentSessionId !== gameSessionIdRef.current) return { state: currentState, killedId: null };
 
@@ -540,7 +552,7 @@ const App: React.FC = () => {
 
              setSpeakingPlayerId(guard.id);
              let context = `【夜间行动】\n请选择守护目标 (voteTarget)。\n状态: 昨晚守护了 ${nextState.lastGuardProtectId || '空'}。`;
-             const res = await callAI(guard, nextState, context);
+             const res = await getSafeAIResponse(guard, nextState, context, "守卫行动");
              
              if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
 
@@ -577,10 +589,8 @@ const App: React.FC = () => {
           }
           const wolfResults = await processWithStagger<Player, { wolf: Player, res: AIResponse }>(wolves, AI_BATCH_SIZE, 0, async (wolf: Player) => {
                const context = `【夜间行动】\n狼人请指刀。请选择击杀目标。\n\n⚠️【狼队最高指令】\n${wolfStrategyContext}\n\n请参考上述指令行动，确保团队配合！`;
-               try {
-                   const res = await callAI(wolf, nextState, context);
-                   return { wolf, res };
-               } catch (e) { return { wolf, res: { speech: '', thought: '', voteTarget: 0 } as any }; }
+               const res = await getSafeAIResponse(wolf, nextState, context, "狼人行动");
+               return { wolf, res };
           });
 
           if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
@@ -622,7 +632,7 @@ const App: React.FC = () => {
               let context = `【夜间行动】\n你的灵药[${nextState.witchPotionUsed?'已用':'可用'}], 毒药[${nextState.witchPoisonUsed?'已用':'可用'}]。\n`;
               if (victimId && !nextState.witchPotionUsed) context += `【倒牌信息】: 今晚 ${victimId}号 倒牌。\n`;
               
-              const res = await callAI(witch, nextState, context);
+              const res = await getSafeAIResponse(witch, nextState, context, "女巫行动");
               
               if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
 
@@ -659,7 +669,7 @@ const App: React.FC = () => {
           if (seer) {
               await performSpeech("预言家请睁眼。"); setSpeakingPlayerId(seer.id);
               
-              const res = await callAI(seer, nextState, `【夜间行动】\n请务必选择一个查验目标 (voteTarget)。`);
+              const res = await getSafeAIResponse(seer, nextState, `【夜间行动】\n请务必选择一个查验目标 (voteTarget)。`, "预言家行动");
               
               if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
 
@@ -715,8 +725,8 @@ const App: React.FC = () => {
           
           const nomResults = await processWithStagger<Player, { id: number, res: AIResponse }>(alivePlayers, AI_BATCH_SIZE, 0, async (p: Player) => {
               const context = `【警长竞选】\n请决定是否上警。\n竞选(voteTarget=${p.id}) / 放弃(0)。`;
-              try { const res = await callAI(p, nextState, context); return { id: p.id, res }; } 
-              catch (e) { return { id: p.id, res: { voteTarget: 0 } as any }; }
+              const res = await getSafeAIResponse(p, nextState, context, "警长竞选");
+              return { id: p.id, res };
           });
 
           if (currentSessionId !== gameSessionIdRef.current) { isProcessingRef.current = false; return; }
@@ -867,12 +877,12 @@ const App: React.FC = () => {
                       const taskResult = await nextTurnTaskRef.current.task; 
                       await handleResponse(taskResult.res, taskResult.audioUrl || null);
                   } catch (e) { 
-                      res = await callAI(speaker, nextState, context); 
+                      res = await getSafeAIResponse(speaker, nextState, context, "发言");
                       await handleResponse(res, null);
                   }
                   nextTurnTaskRef.current = null;
               } else {
-                  res = await callAI(speaker, nextState, context);
+                  res = await getSafeAIResponse(speaker, nextState, context, "发言");
                   await handleResponse(res, null);
               }
               
