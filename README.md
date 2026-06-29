@@ -1,102 +1,52 @@
-# 🐺 AI Werewolf Live: Agent-based Werewolf Simulation
+# 狼人杀
 
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![React](https://img.shields.io/badge/React-18.0+-61DAFB?logo=react&logoColor=black)](https://reactjs.org/)
-[![Stream Ready](https://img.shields.io/badge/OBS-Stream_Ready-ff0000?logo=youtube&logoColor=white)](https://obsproject.com/)
+一个面向“异地一起看海”的 AI 狼人杀观战项目：12 个 AI 玩家自动完成狼人杀对局，房主负责推进/重开，朋友通过只读链接同步观战。
 
-> **World's first LLM-driven, Stream-Ready 12-player Werewolf simulation arena.**
-> 全球首个专为直播设计的、由 LLM 驱动的 12 人全自动狼人杀竞技场。
+线上版本：[https://feature-watch-together.vercel.app](https://feature-watch-together.vercel.app)
 
-[🇨🇳 中文文档 (Chinese Documentation)](./README_zh-CN.md)
+## 这个版本做了什么
 
----
+- 支持 Vercel 部署，AI API Key 只放在服务端环境变量里。
+- 支持 Supabase 房间同步：房主链接可控制对局，观众链接只读观战。
+- 支持多模型编队，可混用 OpenAI、DeepSeek、豆包、通义千问、智谱 GLM、Kimi、Gemini 等供应商。
+- 12 个 AI 玩家一起推进，角色职业随机分配，不固定绑定供应商。
+- 有公开发言、内心思考、时间轴回放、玩家卡片状态和局势感知摘要。
+- 胜负结算按狼人杀常见规则处理：狼人归零好人赢；狼人数量达到存活人数一半，或民/神一边归零，狼人赢。
+- 默认不依赖服务端 TTS；可以使用浏览器语音播放发言。
 
-![Game Demo](./assets/demo.gif)
+## 技术栈
 
-## ✨ Why This Project? (Core Features)
+- React 18
+- TypeScript
+- Vite
+- Vercel API Routes
+- Supabase
 
-This project is not just a Multi-Agent System (MAS) research environment, but a **content generation engine ready for live streaming**.
+## 本地运行
 
-### 🎥 Stream-Ready & OBS Optimized
-* **Green Screen Mode**: Built-in `StreamLayout` provides a transparent background for instant OBS integration.
-* **Tactical Overlay**: Real-time visualization of the AI's "Suspicion Chain" (e.g., Player 3 🔴--> Player 5).
-* **Immersive UI**: Features card animations, speech bubbles, and TTS (Text-to-Speech) support.
-
-### 🧠 Advanced AI Logic (Theory of Mind)
-* **Deception & Camouflage**: Werewolf agents possess dual channels: `[Inner Thought]` (Private) and `[Public Speech]`. They can perform advanced tactics like "Self-Charge" (Barbwire) or "Framing".
-* **Information Gap**: Strict `InformationService` ensures Villagers cannot see the Wolf Channel, and Seers only see their own check results.
-* **Physics Rule Engine**: A built-in `ConstraintGenerator` prevents hallucinations by locking illegal actions at the code level (e.g., Witch cannot self-save).
-
-### 📊 Structured Cognitive Output
-Agents act based on structured data, not just text generation:
-```json
-{
-  "thought": "Player 3's logic has a flaw...",
-  "speech": "Player 3, if you are the Seer, why didn't you leave a badge flow?",
-  "tactics": { 
-    "suspicion_target": 3, 
-    "aggressiveness": 80,
-    "intention": "QUESTIONING"
-  }
-}
-🛠️ Tech Stack
-UI/Frontend: React 18, TypeScript, Tailwind CSS, Framer Motion
-
-Logic Core: Custom Finite State Machine (FSM)
-
-AI Brain: Google Gemini Pro / DeepSeek-V3 (Multi-model support)
-
-Voice/TTS: Web Speech API / Edge TTS
-
-🚀 Quick Start
-1. Clone the Repo
-Bash
-
-git clone [https://github.com/YOUR_USERNAME/ai-werewolf-live.git](https://github.com/YOUR_USERNAME/ai-werewolf-live.git)
-cd ai-werewolf-live
-2. Install Dependencies
-Bash
-
+```bash
 npm install
-# or yarn install
-3. Configure Environment
-Copy .env.example to .env. Fill in at least one API Key:
-
-代码段
-
-# Google Gemini (Recommended for logic/cost) or DeepSeek
-REACT_APP_GEMINI_API_KEY=AIzaSy...
-# REACT_APP_DEEPSEEK_API_KEY=sk-...
-4. Run (Dev Mode)
-Bash
-
 npm run dev
-# Opens at the Vite URL, usually http://localhost:5173
+```
 
-For local API routes, use Vercel's local runtime:
+如果要本地同时跑 Vercel API Routes：
 
 ```bash
 npx vercel dev
 ```
 
-## Watch-Together Deployment
+## 环境变量
 
-This fork supports a host-controlled watch room for remote spectators.
+复制 `.env.example`，在本地使用 `.env.local`。不要提交真实 key。
 
-1. Create a Supabase project.
-2. Copy `supabase/schema.sql` into the Supabase SQL Editor and run it.
-3. Deploy the repository to Vercel.
-4. Add the environment variables from `.env.example` to Vercel.
-
-Browser-exposed variables:
+浏览器可见变量：
 
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
 ```
 
-Server-only variables:
+服务端私密变量：
 
 ```text
 SUPABASE_SERVICE_ROLE_KEY
@@ -108,37 +58,40 @@ DEEPSEEK_API_KEY
 DEEPSEEK_MODEL
 DOUBAO_API_KEY
 DOUBAO_MODEL
+ALIYUN_API_KEY
+ALIYUN_MODEL
+MOONSHOT_API_KEY
+MINIMAX_API_KEY
+ZHIPU_API_KEY
+TENCENT_API_KEY
+GROQ_API_KEY
 ```
 
-Optional server-only provider keys can be added for Gemini, Aliyun, Moonshot, MiniMax, Zhipu, Tencent, and Groq. For local testing, put private values in `.env.local` and never commit them to Git.
+除了 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`，其他模型或服务端 key 都不要使用 `VITE_` 前缀。
 
-The host creates a room from `/`, shares `/room/<roomId>` with a friend, and controls playback from `/room/<roomId>?host=1`. The viewer link is read-only.
-🧠 System Architecture
-代码段
+## Supabase 配置
 
-graph TD
-    User[Audience/OBS] --> UI[React UI / Overlay]
-    UI --> App[App.tsx (State Machine)]
-    
-    subgraph "Core Logic"
-        App --> Logic[LogicService (Rule Validation)]
-        App --> Info[InformationService (Fog of War)]
-    end
-    
-    subgraph "AI Brain"
-        App --> GenAI[GeminiService (Prompt Engineering)]
-        GenAI --> LLM[LLM API]
-    end
-🤝 Roadmap & Contribution
-We are looking for contributors to help with:
+1. 创建 Supabase 项目。
+2. 打开 SQL Editor。
+3. 执行 `supabase/schema.sql`。
+4. 在 Vercel 里配置 Supabase URL、Anon Key、Service Role Key。
 
-[ ] Live Interaction: Connect with TikTok/Bilibili API to allow audience to "Revive" or "Check" players via gifts.
+## Vercel 部署
 
-[ ] Complex Roles: Add "Idiot", "Knight", or "Gravekeeper".
+1. 导入这个 GitHub 仓库。
+2. 添加 `.env.example` 里需要的环境变量。
+3. 部署后访问根路径 `/` 创建房间。
+4. 房主使用 `/room/<roomId>?host=1`。
+5. 朋友使用 `/room/<roomId>` 只读观战。
 
-[ ] Local LLM: Support Ollama for fully offline play.
+## 安全说明
 
-PRs are welcome!
+公开仓库不包含真实 API Key。所有模型 Key、Supabase Service Role Key、房间 Token Secret 都应该只存在于 Vercel 环境变量或本地 `.env.local`。
 
-📄 License
-MIT © 2024
+如果不小心提交过真实 key，应立刻到对应平台撤销并重新生成。
+
+## 来源与许可
+
+本项目基于开源项目 AI Werewolf Live 改造而来，并保留 MIT License。当前仓库的重点改造方向是远程同步观战、多模型 AI 编队、Vercel/Supabase 部署、公开/私密信息隔离和局势记忆。
+
+License: MIT
