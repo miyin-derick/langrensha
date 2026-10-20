@@ -1,10 +1,22 @@
-# 狼人杀
+# AI 狼人杀 · 同步观战
 
-一个面向“异地一起看海”的 AI 狼人杀观战项目：12 个 AI 玩家自动完成狼人杀对局，房主负责推进/重开，朋友通过只读链接同步观战。
+基于 React、TypeScript 和 Supabase 的 AI 狼人杀观战应用：12 个 AI 玩家进行对局，房主推进或重开，观众通过分享链接同步观看。
 
-线上版本：[https://feature-watch-together.vercel.app](https://feature-watch-together.vercel.app)
+[演示入口](https://feature-watch-together.vercel.app) · [运行与部署](#本地运行) · [来源与许可](#来源与许可)
 
-## 这个版本做了什么
+本项目基于开源项目 AI Werewolf Live 改造。下面列出当前版本的改造重点与代码入口，便于了解实现范围。
+
+## 改造重点
+
+| 方向 | 实现内容 | 代码入口 |
+| --- | --- | --- |
+| 房间同步 | 使用 Supabase 保存房间快照并订阅更新，展示连接与同步状态 | [useRoomSession.ts](src/hooks/useRoomSession.ts) |
+| 房主权限 | 区分房主控制与只读观战；更新接口校验房间 ID 和房主凭证 | [roomAuth.ts](api/_shared/roomAuth.ts)、[update.ts](api/rooms/update.ts) |
+| 模型接入 | 在服务端配置供应商和密钥，统一转发模型请求并处理超时 | [providerRegistry.ts](api/_shared/providerRegistry.ts)、[ai-chat.ts](api/ai-chat.ts) |
+| 对局信息 | 整理公开信息、玩家私有信息与局势摘要，供 AI 决策使用 | [informationService.ts](src/services/informationService.ts) |
+| 部署与验证 | 配置 Vercel API Routes、Supabase 数据表和本地自检脚本 | [vercel.json](vercel.json)、[schema.sql](supabase/schema.sql)、[self-check.ts](scripts/self-check.ts) |
+
+## 功能
 
 - 支持 Vercel 部署，AI API Key 只放在服务端环境变量里。
 - 支持 Supabase 房间同步：房主链接可控制对局，观众链接只读观战。
@@ -34,6 +46,15 @@ npm run dev
 ```bash
 npx vercel dev
 ```
+
+验证与构建：
+
+```bash
+npm run selfcheck
+npm run build
+```
+
+`npm run dev` 只启动前端；完整的模型调用和房间功能需要服务端环境变量、Supabase 配置，以及 Vercel API Routes。
 
 ## 环境变量
 
@@ -81,14 +102,18 @@ GROQ_API_KEY
 1. 导入这个 GitHub 仓库。
 2. 添加 `.env.example` 里需要的环境变量。
 3. 部署后访问根路径 `/` 创建房间。
-4. 房主使用 `/room/<roomId>?host=1`。
+4. 房主在创建房间的同一浏览器中使用 `/room/<roomId>?host=1`；控制权还依赖本地保存的房主凭证。
 5. 朋友使用 `/room/<roomId>` 只读观战。
 
 ## 安全说明
 
-公开仓库不包含真实 API Key。所有模型 Key、Supabase Service Role Key、房间 Token Secret 都应该只存在于 Vercel 环境变量或本地 `.env.local`。
+所有模型 Key、Supabase Service Role Key、房间 Token Secret 都应只保存在 Vercel 环境变量或本地 `.env.local`，不要提交到仓库。
 
 如果不小心提交过真实 key，应立刻到对应平台撤销并重新生成。
+
+## 项目缘起
+
+这个项目最初来自“异地一起看海”的想法：让朋友在不同地点，也能一起看一场 AI 狼人杀。围绕这个使用场景，逐步补齐房间同步、观战分享和部署流程。
 
 ## 来源与许可
 
